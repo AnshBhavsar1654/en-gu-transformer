@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import math
 import os
+import requests
 from collections import Counter
 
 # Set page config
@@ -211,6 +212,72 @@ class Transformer(nn.Module):
         output = self.fc_out(dec_output)
         return output
 
+# Function to download file from Google Drive
+def download_file_from_google_drive(file_id, destination):
+    """Download file from Google Drive using file ID"""
+    def get_confirm_token(response):
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+        return None
+
+    def save_response_content(response, destination):
+        CHUNK_SIZE = 32768
+        with open(destination, "wb") as f:
+            for chunk in response.iter_content(CHUNK_SIZE):
+                if chunk:
+                    f.write(chunk)
+
+    URL = "https://docs.google.com/uc?export=download"
+    session = requests.Session()
+
+    response = session.get(URL, params={'id': file_id}, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+# Function to download model if not exists
+@st.cache_data
+def download_model_if_needed():
+    """Download the model from Google Drive if it doesn't exist locally"""
+    model_path = 'transformer_en_gu.pth'
+    
+    if not os.path.exists(model_path):
+        st.info("Model not found locally. Downloading from Google Drive...")
+        
+        # Extract file ID from Google Drive link
+        # https://drive.google.com/file/d/1TGvSqDYXBEdw461agMNHSepDWNyY5nDZ/view?usp=sharing
+        file_id = '1TGvSqDYXBEdw461agMNHSepDWNyY5nDZ'
+        
+        try:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            status_text.text("Downloading model file...")
+            download_file_from_google_drive(file_id, model_path)
+            
+            progress_bar.progress(100)
+            status_text.text("Model downloaded successfully!")
+            
+            # Verify file exists and has reasonable size
+            if os.path.exists(model_path) and os.path.getsize(model_path) > 1000:
+                st.success("✅ Model downloaded and verified!")
+                return True
+            else:
+                st.error("❌ Downloaded model file appears to be corrupted.")
+                return False
+                
+        except Exception as e:
+            st.error(f"❌ Failed to download model: {str(e)}")
+            return False
+    else:
+        st.info("✅ Model found locally!")
+        return True
+
 # Translation function
 def translate_sentence(model, sentence, src_vocab, tgt_vocab, max_len=50):
     model.eval()
@@ -254,41 +321,56 @@ def translate_sentence(model, sentence, src_vocab, tgt_vocab, max_len=50):
 # Load model function
 @st.cache_resource
 def load_model():
-    if not os.path.exists('transformer_en_gu.pth'):
-        st.error("Model file 'transformer_en_gu.pth' not found. Please make sure the model file is in the same directory as this script.")
+    model_path = 'transformer_en_gu.pth'
+    
+    if not os.path.exists(model_path):
+        st.error(f"Model file '{model_path}' not found. Please check if the download was successful.")
         st.stop()
     
-    checkpoint = torch.load('transformer_en_gu.pth', map_location=device)
-    
-    # Extract model parameters from your training code
-    d_model = 512
-    num_heads = 8
-    num_layers = 4
-    d_ff = 2048
-    max_seq_len = 128
-    
-    src_vocab = checkpoint['src_vocab']
-    tgt_vocab = checkpoint['tgt_vocab']
-    
-    model = Transformer(
-        src_vocab_size=len(src_vocab),
-        tgt_vocab_size=len(tgt_vocab),
-        d_model=d_model,
-        num_heads=num_heads,
-        num_layers=num_layers,
-        d_ff=d_ff,
-        max_seq_len=max_seq_len
-    ).to(device)
-    
-    model.load_state_dict(checkpoint['model_state_dict'])
-    model.eval()
-    
-    return model, src_vocab, tgt_vocab
+    try:
+        checkpoint = torch.load(model_path, map_location=device)
+        
+        # Extract model parameters from your training code
+        d_model = 512
+        num_heads = 8
+        num_layers = 4
+        d_ff = 2048
+        max_seq_len = 128
+        
+        src_vocab = checkpoint['src_vocab']
+        tgt_vocab = checkpoint['tgt_vocab']
+        
+        model = Transformer(
+            src_vocab_size=len(src_vocab),
+            tgt_vocab_size=len(tgt_vocab),
+            d_model=d_model,
+            num_heads=num_heads,
+            num_layers=num_layers,
+            d_ff=d_ff,
+            max_seq_len=max_seq_len
+        ).to(device)
+        
+        model.load_state_dict(checkpoint['model_state_dict'])
+        model.eval()
+        
+        return model, src_vocab, tgt_vocab
+        
+    except Exception as e:
+        st.error(f"Error loading model: {str(e)}")
+        st.error("This might be due to:")
+        st.error("1. Corrupted model file")
+        st.error("2. Model architecture mismatch")
+        st.error("3. PyTorch version compatibility issues")
+        st.stop()
 
 # Streamlit UI
 def main():
     st.title("🌐 English to Gujarati Translator")
     st.markdown("---")
+    
+    # Download model if needed
+    if not download_model_if_needed():
+        st.stop()
     
     # Model info sidebar
     with st.sidebar:
@@ -296,6 +378,7 @@ def main():
         st.write(f"**Device:** {device}")
         st.write("**Architecture:** Transformer")
         st.write("**Language Pair:** English → Gujarati")
+        st.write("**Model Source:** Google Drive")
         
         if st.button("Clear History", type="secondary"):
             st.session_state.translation_history = []
