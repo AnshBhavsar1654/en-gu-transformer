@@ -328,7 +328,8 @@ def load_model():
         st.stop()
     
     try:
-        checkpoint = torch.load(model_path, map_location=device)
+        # PyTorch 2.6+ requires weights_only=False for custom objects
+        checkpoint = torch.load(model_path, map_location=device, weights_only=False)
         
         # Extract model parameters from your training code
         d_model = 512
