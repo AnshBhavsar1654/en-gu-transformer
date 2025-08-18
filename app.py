@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import math
 import os
-import requests
 from collections import Counter
+from huggingface_hub import hf_hub_download
 
 # Set page config
 st.set_page_config(
@@ -212,53 +212,31 @@ class Transformer(nn.Module):
         output = self.fc_out(dec_output)
         return output
 
-# Function to download file from Google Drive
-def download_file_from_google_drive(file_id, destination):
-    """Download file from Google Drive using file ID"""
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                return value
-        return None
-
-    def save_response_content(response, destination):
-        CHUNK_SIZE = 32768
-        with open(destination, "wb") as f:
-            for chunk in response.iter_content(CHUNK_SIZE):
-                if chunk:
-                    f.write(chunk)
-
-    URL = "https://docs.google.com/uc?export=download"
-    session = requests.Session()
-
-    response = session.get(URL, params={'id': file_id}, stream=True)
-    token = get_confirm_token(response)
-
-    if token:
-        params = {'id': file_id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-
-    save_response_content(response, destination)
-
-# Function to download model if not exists
+# Function to download model from Hugging Face
 @st.cache_data
 def download_model_if_needed():
-    """Download the model from Google Drive if it doesn't exist locally"""
+    """Download the model from Hugging Face if it doesn't exist locally"""
     model_path = 'transformer_en_gu.pth'
     
     if not os.path.exists(model_path):
-        st.info("Model not found locally. Downloading from Google Drive...")
-        
-        # Extract file ID from Google Drive link
-        # https://drive.google.com/file/d/1TGvSqDYXBEdw461agMNHSepDWNyY5nDZ/view?usp=sharing
-        file_id = '1TGvSqDYXBEdw461agMNHSepDWNyY5nDZ'
+        st.info("Model not found locally. Downloading from Hugging Face...")
         
         try:
             progress_bar = st.progress(0)
             status_text = st.empty()
             
-            status_text.text("Downloading model file...")
-            download_file_from_google_drive(file_id, model_path)
+            status_text.text("Downloading model from Hugging Face...")
+            
+            # Download model from Hugging Face Hub
+            repo_id = "anshbhavsar2674/english-gujarati-transformer"
+            filename = "transformer_en_gu.pth"
+            
+            downloaded_path = hf_hub_download(
+                repo_id=repo_id,
+                filename=filename,
+                local_dir=".",
+                local_dir_use_symlinks=False
+            )
             
             progress_bar.progress(100)
             status_text.text("Model downloaded successfully!")
@@ -273,6 +251,10 @@ def download_model_if_needed():
                 
         except Exception as e:
             st.error(f"❌ Failed to download model: {str(e)}")
+            st.error("Please check:")
+            st.error("1. Internet connection")
+            st.error("2. Hugging Face repository accessibility")
+            st.error("3. Model file exists in the repository")
             return False
     else:
         st.info("✅ Model found locally!")
@@ -379,7 +361,8 @@ def main():
         st.write(f"**Device:** {device}")
         st.write("**Architecture:** Transformer")
         st.write("**Language Pair:** English → Gujarati")
-        st.write("**Model Source:** Google Drive")
+        st.write("**Model Source:** Hugging Face")
+        st.write("**Repository:** anshbhavsar2674/english-gujarati-transformer")
         
         if st.button("Clear History", type="secondary"):
             st.session_state.translation_history = []
