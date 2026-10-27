@@ -1,0 +1,6 @@
+__pycache__/
+en-gu/
+gujarati-english-translation.v1-backup.ipynb
+hf_token.txt
+transformer_en_gu.pth
+best.pt

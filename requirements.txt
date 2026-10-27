@@ -1,4 +1,5 @@
-streamlit
-torch
-huggingface_hub
-requests
+streamlit>=1.40.0
+torch>=2.1.0
+numpy>=1.24.0
+sentencepiece>=0.2.0
+huggingface_hub>=0.20.0
