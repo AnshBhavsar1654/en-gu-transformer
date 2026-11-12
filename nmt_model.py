@@ -5,6 +5,7 @@ This file is shared by the Kaggle training notebook (which writes it with
 exact same architecture and decoding code.
 """
 import math
+import os
 import re
 
 import torch
@@ -293,16 +294,52 @@ def translate(model, sp, sentences, beam_size=5, batch_size=32, max_len_a=1.5, m
     return results
 
 
-def load_for_inference(path, device="cpu"):
-    """Load the exported checkpoint (config + weights + SentencePiece model in one file)."""
+def config_from_state_dict(state):
+    """Recover the architecture from a bare state_dict (num_heads and max_len aren't stored in it)."""
+    vocab_size, d_model = state["embedding.weight"].shape
+    return dict(
+        vocab_size=vocab_size,
+        d_model=d_model,
+        num_heads=8,
+        num_encoder_layers=len({k.split(".")[1] for k in state if k.startswith("encoder_layers.")}),
+        num_decoder_layers=len({k.split(".")[1] for k in state if k.startswith("decoder_layers.")}),
+        d_ff=state["encoder_layers.0.feed_forward.linear1.weight"].shape[0],
+        max_len=256,
+    )
+
+
+def load_for_inference(path, device="cpu", spm_path=None):
+    """Load a checkpoint for translation.
+
+    Accepts best.pt or last.pt (config + weights + SentencePiece model in one file), or a bare
+    state_dict (snapshot_*.pt, or best.pt from older runs) together with `spm_path`, the
+    spm_en_gu.model tokenizer written to the same Kaggle output folder.
+    """
     import sentencepiece as spm
 
     ckpt = torch.load(path, map_location="cpu", weights_only=True)
-    model = Transformer(**ckpt["config"])
-    missing, unexpected = model.load_state_dict(ckpt["model_state_dict"], strict=False)
+    if "model_state_dict" in ckpt:
+        state, config = ckpt["model_state_dict"], ckpt["config"]
+    else:
+        state, config = ckpt, config_from_state_dict(ckpt)
+
+    model = Transformer(**config)
+    missing, unexpected = model.load_state_dict(state, strict=False)
     # The output projection is tied to the embedding, so the export leaves it out
     if unexpected or set(missing) - {"output_proj.weight"}:
         raise RuntimeError(f"Checkpoint mismatch. Missing: {missing}, unexpected: {unexpected}")
     model.to(device).eval()
-    sp = spm.SentencePieceProcessor(model_proto=ckpt["spm_model"].numpy().tobytes())
+
+    if "spm_model" in ckpt:
+        sp = spm.SentencePieceProcessor(model_proto=ckpt["spm_model"].numpy().tobytes())
+    elif spm_path and os.path.exists(spm_path):
+        sp = spm.SentencePieceProcessor(model_file=spm_path)
+    else:
+        raise FileNotFoundError(
+            f"{os.path.basename(path)} holds only model weights, not the tokenizer. Download "
+            f"spm_en_gu.model from the same Kaggle output and put it at {spm_path or 'spm_en_gu.model'}."
+        )
+    if sp.get_piece_size() != config["vocab_size"]:
+        raise RuntimeError(f"Tokenizer has {sp.get_piece_size()} pieces but the model expects "
+                           f"{config['vocab_size']}: they come from different training runs.")
     return model, sp, ckpt.get("metrics", {})

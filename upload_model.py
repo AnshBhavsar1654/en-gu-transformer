@@ -2,6 +2,9 @@
 from huggingface_hub import HfApi, login
 import os
 
+# best.pt from the Kaggle notebook output (self-contained: config + weights + tokenizer)
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best.pt")
+
 # Login to Hugging Face (you'll be prompted for your token)
 login()
 
@@ -20,15 +23,15 @@ try:
         private=False  # Set to True if you want it private
     )
     print(f"Repository created: https://huggingface.co/{repo_id}")
-    
+
     # Upload your model file
     api.upload_file(
-        path_or_fileobj="C:/Data/Coding/Projects/English to Gujarati/nmt_en_gu.pt",  # Exported by the notebook
-        path_in_repo="nmt_en_gu.pt",     # Name in the repo (app.py downloads this name)
+        path_or_fileobj=MODEL_PATH,
+        path_in_repo="best.pt",     # Name in the repo (app.py downloads this name)
         repo_id=repo_id,
         repo_type="model"
     )
     print("Model uploaded successfully!")
-    
+
 except Exception as e:
     print(f"Error: {e}")

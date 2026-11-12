@@ -12,8 +12,11 @@ import torch
 
 from nmt_model import load_for_inference, translate
 
-MODEL_PATH = "nmt_en_gu.pt"
-HF_REPO_ID = "anshbhavsar2674/english-gujarati-transformer"  # used when the file isn't next to app.py
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(APP_DIR, "best.pt")  # downloaded from the Kaggle notebook output
+# Only for best.pt files from runs before the notebook made them self-contained
+SPM_PATH = os.path.join(APP_DIR, "spm_en_gu.model")
+HF_REPO_ID = "anshbhavsar2674/english-gujarati-transformer"  # used when best.pt isn't next to app.py
 MAX_CHARS = 2000
 HISTORY_SIZE = 20
 
@@ -76,14 +79,19 @@ st.markdown(
 )
 
 
-@st.cache_resource(show_spinner="Loading translation model…")
-def load_model():
+def model_version():
+    """Changes whenever best.pt is replaced, so a newer download is picked up without a restart."""
+    return os.path.getmtime(MODEL_PATH) if os.path.exists(MODEL_PATH) else None
+
+
+@st.cache_resource(show_spinner="Loading translation model…", max_entries=1)
+def load_model(version):
     path = MODEL_PATH
-    if not os.path.exists(path):
+    if version is None:
         from huggingface_hub import hf_hub_download
-        path = hf_hub_download(HF_REPO_ID, MODEL_PATH)
+        path = hf_hub_download(HF_REPO_ID, os.path.basename(MODEL_PATH))
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model, sp, metrics = load_for_inference(path, device)
+    model, sp, metrics = load_for_inference(path, device, spm_path=SPM_PATH)
     return model, sp, metrics, device
 
 
@@ -91,9 +99,9 @@ SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
 @st.cache_data(show_spinner=False, max_entries=512)
-def translate_text(text, beam_size):
+def translate_text(text, beam_size, version):
     """The model is trained on single sentences, so split paragraphs into sentences first."""
-    model, sp, _, _ = load_model()
+    model, sp, _, _ = load_model(version)
     layout, sentences = [], []
     for paragraph in text.split("\n"):
         parts = [s for s in SENTENCE_END.split(paragraph.strip()) if s]
@@ -121,7 +129,7 @@ def clear_input():
 
 def run_translation(text, beam_size):
     start = time.perf_counter()
-    translation, n_sentences = translate_text(text, beam_size)
+    translation, n_sentences = translate_text(text, beam_size, model_version())
     elapsed = time.perf_counter() - start
     st.session_state.result = {
         "english": text, "gujarati": translation, "seconds": elapsed,
@@ -184,11 +192,11 @@ def main():
     )
 
     try:
-        model, _, metrics, device = load_model()
+        model, _, metrics, device = load_model(model_version())
     except Exception as exc:
         st.error(
             f"Could not load the model: {exc}\n\n"
-            f"Download `{MODEL_PATH}` from the Kaggle notebook output and put it next to `app.py`."
+            "Download `best.pt` from the Kaggle notebook output and put it next to `app.py`."
         )
         st.stop()
 
