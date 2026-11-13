@@ -1,0 +1,23 @@
+{
+  "seed": 42,
+  "max_sentences": 1000000,
+  "max_words": 80,
+  "files": {
+    "val.en": {
+      "lines": 2000,
+      "sha256": "280a2e40e454cb01ac11e9234cac196b241ee4694c77c8be5586da3d5de00a4b"
+    },
+    "val.gu": {
+      "lines": 2000,
+      "sha256": "aadd3af9c0b9d09fff7951b88dabb01d7fc7a1be3d28be32d9bc4b228dcfc080"
+    },
+    "test.en": {
+      "lines": 2000,
+      "sha256": "5590c27ac2b4e0d28f7c26033fa857b7c90f41e365b433b0faab993b80fd7e8b"
+    },
+    "test.gu": {
+      "lines": 2000,
+      "sha256": "3349f939ca9fa429f3c5108304b02aad60a854ff608bcd7ad05babd6e8cd92be"
+    }
+  }
+}

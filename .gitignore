@@ -4,3 +4,13 @@ gujarati-english-translation.v1-backup.ipynb
 hf_token.txt
 transformer_en_gu.pth
 best.pt
+# Local pipeline outputs, caches and planning docs
+docs/
+data/processed/
+artifacts/
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+mlruns/
+data/smoke/

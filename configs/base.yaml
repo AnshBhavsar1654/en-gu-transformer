@@ -1,0 +1,52 @@
+# Hyperparameters of the run that produced the current best.pt (Kaggle, 2xT4, ~3.1 h).
+# Layer another file on top with `--config configs/base.yaml --config configs/smoke.yaml`
+# or override single values with `--set train.max_epochs=3`.
+
+seed: 42
+
+paths:
+  corpus_dir: en-gu               # folder with train.en / train.gu
+  processed_dir: data/processed   # cleaned training set (generated)
+  eval_dir: data/eval             # frozen validation + test sets
+  artifacts_dir: artifacts        # tokenizer, checkpoints, metrics, exported best.pt
+
+data:
+  max_sentences: 1000000    # null = whole corpus (~3.07M pairs)
+  val_size: 2000
+  test_size: 2000
+  max_words: 80             # drop pairs with longer sentences (cleaning)
+  max_tokens_per_sent: 128  # drop longer training pairs (in subword tokens)
+  refreeze_eval: false      # true = regenerate val/test; scores are then NOT comparable with earlier models
+
+tokenizer:
+  vocab_size: 32000
+  character_coverage: 0.9999   # drops ultra-rare noise characters; byte fallback covers them
+  input_sentence_size: 2000000
+
+model:                      # Transformer-base (vocab_size comes from tokenizer.vocab_size)
+  d_model: 512
+  num_heads: 8
+  num_encoder_layers: 6
+  num_decoder_layers: 6
+  d_ff: 2048
+  dropout: 0.1
+  max_len: 256
+
+train:
+  max_tokens_per_gpu: 6144   # padded tokens per GPU per micro-batch; lower if you hit CUDA OOM
+  tokens_per_update: 24576   # effective batch size, reached through gradient accumulation
+  peak_lr: 7.0e-4
+  warmup_steps: 4000
+  label_smoothing: 0.1
+  clip_norm: 1.0
+  max_epochs: 30
+  time_budget_hours: 10.5    # Kaggle stops sessions at 12h; leaves time for averaging, eval and export
+  eval_every: 2000           # updates between validation runs / checkpoints
+  patience: 6                # stop after this many evaluations without val-loss improvement
+  num_snapshots_to_average: 5
+  quick_val_size: 500        # greedy BLEU during training on a subset, to keep evaluation fast
+  num_workers: 2             # DataLoader workers (0 on Windows if you hit multiprocessing errors)
+  resume_checkpoint: null    # e.g. path to a previous run's last.pt
+
+evaluate:
+  beam_size: 5

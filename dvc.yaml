@@ -1,0 +1,74 @@
+# Reproducible pipeline: `dvc repro` (after `dvc init` and `dvc add en-gu`), or run the same
+# commands without DVC via `python -m en_gu all`. Hyperparameters live in configs/base.yaml.
+
+stages:
+  prepare:
+    cmd: python -m en_gu prepare
+    deps:
+      - en-gu/train.en
+      - en-gu/train.gu
+      - src/en_gu/data.py
+      - src/en_gu/prepare.py
+    params:
+      - configs/base.yaml:
+          - seed
+          - data
+    outs:
+      - data/processed
+      - data/eval:
+          persist: true   # an existing eval set is reused, never regenerated: every model is scored on the same sentences
+
+  tokenizer:
+    cmd: python -m en_gu tokenizer
+    deps:
+      - data/processed
+      - src/en_gu/tokenizer.py
+    params:
+      - configs/base.yaml:
+          - tokenizer
+    outs:
+      - artifacts/tokenizer
+
+  train:
+    cmd: python -m en_gu train
+    deps:
+      - data/processed
+      - data/eval
+      - artifacts/tokenizer
+      - src/en_gu/train.py
+      - src/en_gu/model.py
+      - src/en_gu/data.py
+    params:
+      - configs/base.yaml:
+          - seed
+          - model
+          - train
+    outs:
+      - artifacts/train
+
+  evaluate:
+    cmd: python -m en_gu evaluate
+    deps:
+      - artifacts/train
+      - artifacts/tokenizer
+      - data/eval
+      - src/en_gu/evaluate.py
+    params:
+      - configs/base.yaml:
+          - evaluate
+    outs:
+      - artifacts/eval/selected.pt
+      - artifacts/eval/test_hypotheses.jsonl
+    metrics:
+      - artifacts/eval/metrics.json:
+          cache: false
+
+  export:
+    cmd: python -m en_gu export
+    deps:
+      - artifacts/eval/selected.pt
+      - artifacts/eval/metrics.json
+      - artifacts/tokenizer
+      - src/en_gu/export.py
+    outs:
+      - artifacts/best.pt

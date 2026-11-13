@@ -1,0 +1,33 @@
+# Tiny end-to-end run on a CPU in a few minutes, to check the pipeline works. Layer on top of base.yaml:
+#   python -m en_gu all --config configs/base.yaml --config configs/smoke.yaml
+# Everything goes to separate folders, so it never touches the real data/eval or artifacts.
+
+paths:
+  processed_dir: data/smoke/processed
+  eval_dir: data/smoke/eval
+  artifacts_dir: data/smoke/artifacts
+
+data:
+  max_sentences: 20000
+  val_size: 200
+  test_size: 200
+
+tokenizer:
+  vocab_size: 2000
+  input_sentence_size: 100000
+
+model:
+  d_model: 64
+  num_heads: 4
+  num_encoder_layers: 2
+  num_decoder_layers: 2
+  d_ff: 128
+
+train:
+  max_tokens_per_gpu: 2048
+  tokens_per_update: 2048
+  warmup_steps: 20
+  max_epochs: 2
+  eval_every: 20
+  quick_val_size: 50
+  num_workers: 0

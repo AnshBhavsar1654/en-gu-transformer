@@ -1,24 +1,20 @@
 """Transformer encoder-decoder for English -> Gujarati translation.
 
-This file is shared by the Kaggle training notebook (which writes it with
-%%writefile) and the Streamlit app, so training and inference always use the
-exact same architecture and decoding code.
+Training, evaluation and the Streamlit app all import this module, so they always use
+the exact same architecture and decoding code.
 """
+
 import math
 import os
-import re
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# These ids are baked into the SentencePiece model trained in the notebook
+from en_gu.textutils import normalize_text
+
+# These ids are baked into the SentencePiece model trained by the pipeline
 PAD_IDX, UNK_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
-
-
-def normalize_text(text):
-    """Collapse whitespace; SentencePiece handles Unicode normalisation."""
-    return re.sub(r"\s+", " ", text).strip()
 
 
 def sinusoidal_positions(max_len, d_model):
@@ -48,7 +44,9 @@ class MultiHeadAttention(nn.Module):
         k, v = self.w_kv(memory).view(batch_size, k_len, 2, self.num_heads, self.d_k).permute(2, 0, 3, 1, 4)
         # Fused attention kernel (Flash / memory-efficient) when the GPU supports it
         out = F.scaled_dot_product_attention(
-            q, k, v,
+            q,
+            k,
+            v,
             attn_mask=mask,
             dropout_p=self.dropout if self.training else 0.0,
             is_causal=is_causal,
@@ -106,8 +104,17 @@ class DecoderLayer(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, vocab_size, d_model=512, num_heads=8, num_encoder_layers=6,
-                 num_decoder_layers=6, d_ff=2048, dropout=0.1, max_len=256):
+    def __init__(
+        self,
+        vocab_size,
+        d_model=512,
+        num_heads=8,
+        num_encoder_layers=6,
+        num_decoder_layers=6,
+        d_ff=2048,
+        dropout=0.1,
+        max_len=256,
+    ):
         super().__init__()
         self.d_model = d_model
         self.max_len = max_len
@@ -119,12 +126,12 @@ class Transformer(nn.Module):
         self.register_buffer("pe", sinusoidal_positions(max_len, d_model), persistent=False)
         self.dropout = nn.Dropout(dropout)
 
-        self.encoder_layers = nn.ModuleList([
-            EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_encoder_layers)
-        ])
-        self.decoder_layers = nn.ModuleList([
-            DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_decoder_layers)
-        ])
+        self.encoder_layers = nn.ModuleList(
+            [EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_encoder_layers)]
+        )
+        self.decoder_layers = nn.ModuleList(
+            [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_decoder_layers)]
+        )
         self.encoder_norm = nn.LayerNorm(d_model)
         self.decoder_norm = nn.LayerNorm(d_model)
         self.output_proj = nn.Linear(d_model, vocab_size, bias=False)
@@ -136,7 +143,7 @@ class Transformer(nn.Module):
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-        nn.init.normal_(self.embedding.weight, mean=0.0, std=self.d_model ** -0.5)
+        nn.init.normal_(self.embedding.weight, mean=0.0, std=self.d_model**-0.5)
         with torch.no_grad():
             self.embedding.weight[PAD_IDX].zero_()
 
@@ -279,7 +286,7 @@ def translate(model, sp, sentences, beam_size=5, batch_size=32, max_len_a=1.5, m
 
     order = sorted(encoded, key=lambda i: len(encoded[i]))  # similar lengths -> less padding
     for start in range(0, len(order), batch_size):
-        idx = order[start:start + batch_size]
+        idx = order[start : start + batch_size]
         width = max(len(encoded[i]) for i in idx)
         src = torch.full((len(idx), width), PAD_IDX, dtype=torch.long)
         for row, i in enumerate(idx):
@@ -333,13 +340,15 @@ def load_for_inference(path, device="cpu", spm_path=None):
     if "spm_model" in ckpt:
         sp = spm.SentencePieceProcessor(model_proto=ckpt["spm_model"].numpy().tobytes())
     elif spm_path and os.path.exists(spm_path):
-        sp = spm.SentencePieceProcessor(model_file=spm_path)
+        sp = spm.SentencePieceProcessor(model_file=str(spm_path))
     else:
         raise FileNotFoundError(
             f"{os.path.basename(path)} holds only model weights, not the tokenizer. Download "
             f"spm_en_gu.model from the same Kaggle output and put it at {spm_path or 'spm_en_gu.model'}."
         )
     if sp.get_piece_size() != config["vocab_size"]:
-        raise RuntimeError(f"Tokenizer has {sp.get_piece_size()} pieces but the model expects "
-                           f"{config['vocab_size']}: they come from different training runs.")
+        raise RuntimeError(
+            f"Tokenizer has {sp.get_piece_size()} pieces but the model expects "
+            f"{config['vocab_size']}: they come from different training runs."
+        )
     return model, sp, ckpt.get("metrics", {})

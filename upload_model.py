@@ -1,6 +1,7 @@
 # upload_model.py
-from huggingface_hub import HfApi, login
 import os
+
+from huggingface_hub import HfApi, login
 
 # best.pt from the Kaggle notebook output (self-contained: config + weights + tokenizer)
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best.pt")

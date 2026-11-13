@@ -1,20 +1,25 @@
-"""Streamlit front end for the English -> Gujarati Transformer trained in the notebook."""
+"""Streamlit front end for the English -> Gujarati Transformer trained by the en_gu pipeline."""
 import csv
 import html
 import io
 import os
 import re
+import sys
 import time
 from datetime import datetime
 
 import streamlit as st
 import torch
 
-from nmt_model import load_for_inference, translate
-
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(APP_DIR, "best.pt")  # downloaded from the Kaggle notebook output
-# Only for best.pt files from runs before the notebook made them self-contained
+try:
+    from en_gu.model import load_for_inference, translate
+except ModuleNotFoundError:  # package not pip-installed: use the copy in this repo
+    sys.path.insert(0, os.path.join(APP_DIR, "src"))
+    from en_gu.model import load_for_inference, translate
+
+MODEL_PATH = os.path.join(APP_DIR, "best.pt")  # downloaded from the Kaggle training output
+# Only for best.pt files from runs before the checkpoint became self-contained
 SPM_PATH = os.path.join(APP_DIR, "spm_en_gu.model")
 HF_REPO_ID = "anshbhavsar2674/english-gujarati-transformer"  # used when best.pt isn't next to app.py
 MAX_CHARS = 2000
