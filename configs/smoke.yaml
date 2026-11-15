@@ -31,3 +31,9 @@ train:
   eval_every: 20
   quick_val_size: 50
   num_workers: 0
+
+tracking:                      # keep smoke runs out of the real experiment and registry
+  uri: sqlite:///data/smoke/mlflow.db
+  artifact_root: data/smoke/mlartifacts
+  experiment: smoke
+  registered_model: smoke-translator

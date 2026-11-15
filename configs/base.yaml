@@ -50,3 +50,10 @@ train:
 
 evaluate:
   beam_size: 5
+
+tracking:                      # MLflow experiment tracking + model registry (needs `pip install -e ".[tracking]"`)
+  enabled: true                # no-op with a warning if mlflow isn't installed
+  uri: sqlite:///mlflow.db
+  artifact_root: mlartifacts
+  experiment: en-gu-nmt
+  registered_model: en-gu-translator

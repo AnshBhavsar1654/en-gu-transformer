@@ -11,6 +11,7 @@ from en_gu.config import artifact_path, model_config
 from en_gu.data import load_eval_set
 from en_gu.model import PAD_IDX, Transformer, load_for_inference, translate
 from en_gu.tokenizer import load_tokenizer, spm_model_path
+from en_gu.tracking import tracked_run
 
 
 def _sacrebleu():
@@ -58,6 +59,11 @@ def _device():
 
 
 def evaluate(cfg):
+    with tracked_run(cfg, "evaluate") as tracker:
+        return _evaluate(cfg, tracker)
+
+
+def _evaluate(cfg, tracker):
     """Compare last / best / averaged checkpoints on the validation set, then score the winner on test.
 
     Writes metrics.json, test hypotheses, and the selected weights (fp16, without the tied output
@@ -124,6 +130,19 @@ def evaluate(cfg):
             f.write(json.dumps({"src": src, "ref": ref, "hyp": hyp}, ensure_ascii=False) + "\n")
     # The output projection is tied to the embedding, so it is not stored twice
     atomic_save({k: v.half() for k, v in model.state_dict().items() if k != "output_proj.weight"}, out / "selected.pt")
+    tracker.log_metrics(
+        {
+            "test_bleu": metrics["test_bleu"],
+            "test_chrf": metrics["test_chrf"],
+            "test_ter": metrics["test_ter"],
+            "test_greedy_bleu": greedy["bleu"],
+            "test_greedy_chrf": greedy["chrf++"],
+            **{f"val_{name}_chrf": r["chrf++"] for name, r in val_scores.items()},
+        }
+    )
+    tracker.set_tags({"selected_checkpoint": chosen})
+    tracker.log_artifact(out / "metrics.json", "eval")
+    tracker.log_artifact(out / "test_hypotheses.jsonl", "eval")
     return metrics
 
 

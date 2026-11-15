@@ -65,6 +65,7 @@ def tiny_cfg(tmp_path, corpus_dir):
         "train.eval_every=10",
         "train.quick_val_size=20",
         "train.num_workers=0",
+        "tracking.enabled=false",  # tests that exercise tracking turn it on with a temporary store
     ]
     return load_config([CONFIG_DIR / "base.yaml"], overrides)
 

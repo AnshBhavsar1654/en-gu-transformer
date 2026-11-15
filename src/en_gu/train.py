@@ -19,6 +19,7 @@ from en_gu.data import PairDataset, TokenBatchSampler, collate, load_eval_set, r
 from en_gu.evaluate import score_translations, validation_loss
 from en_gu.model import PAD_IDX, Transformer
 from en_gu.tokenizer import check_tokenizer, load_tokenizer, spm_model_path
+from en_gu.tracking import describe_run, tracked_run
 
 try:
     from tqdm.auto import tqdm
@@ -51,6 +52,14 @@ class LossCompute(nn.Module):
 
 
 def train(cfg):
+    with tracked_run(cfg, "train") as tracker:
+        return _train(cfg, tracker)
+
+
+def _train(cfg, tracker):
+    params, tags = describe_run(cfg)
+    tracker.log_params(params)
+    tracker.set_tags({**tags, "stage": "train"})
     tcfg = cfg["train"]
     seed = cfg["seed"]
     random.seed(seed)
@@ -204,6 +213,10 @@ def train(cfg):
                         "hours": hours,
                     }
                 )
+                tracker.log_metrics(
+                    {"val_loss": val_loss, "val_bleu": quick["bleu"], "val_chrf": quick["chrf++"], "hours": hours},
+                    step=step,
+                )
                 improved = val_loss < best_val_loss
                 print(
                     f"\n[step {step:>6} | epoch {epoch + 1} | {hours:.2f}h] val loss {val_loss:.4f} "
@@ -250,4 +263,9 @@ def train(cfg):
         json.dumps({"step": step, "stop_reason": stop_reason, "history": history}, indent=2), encoding="utf-8"
     )
     print(f"Stopped: {stop_reason}. Total updates: {step:,}")
+    tracker.log_metrics(
+        {"train_updates": step, "best_val_loss": best_val_loss if best_val_loss < float("inf") else None}
+    )
+    tracker.set_tags({"stop_reason": stop_reason})
+    tracker.log_artifact(out_dir / "history.json", "train")
     return {"step": step, "stop_reason": stop_reason}

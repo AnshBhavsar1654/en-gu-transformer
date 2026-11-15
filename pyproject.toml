@@ -18,7 +18,8 @@ dependencies = [
 [project.optional-dependencies]
 serve = ["streamlit>=1.40.0", "huggingface_hub>=0.20.0"]
 train = ["sacrebleu>=2.4.0", "tqdm>=4.66.0", "matplotlib>=3.7.0"]
-dev = ["pytest>=8.0", "ruff>=0.6.0", "pre-commit>=3.7"]
+tracking = ["mlflow>=2.16"]
+dev = ["mlflow>=2.16", "pytest>=8.0", "ruff>=0.6.0", "pre-commit>=3.7"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

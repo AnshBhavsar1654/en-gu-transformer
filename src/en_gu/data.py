@@ -145,6 +145,11 @@ def load_eval_set(eval_dir):
     return val, test
 
 
+def eval_fingerprint(eval_dir):
+    """One hash that identifies the frozen eval set (the manifest embeds every file's hash)."""
+    return sha256_file(Path(eval_dir) / MANIFEST_NAME)
+
+
 def has_frozen_eval(eval_dir):
     return (Path(eval_dir) / MANIFEST_NAME).exists()
 

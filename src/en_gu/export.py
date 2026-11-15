@@ -6,11 +6,18 @@ import torch
 
 from en_gu.checkpoint import save_for_app
 from en_gu.config import artifact_path, model_config
+from en_gu.data import eval_fingerprint, sha256_file
 from en_gu.model import load_for_inference, translate
 from en_gu.tokenizer import load_tokenizer, spm_model_path
+from en_gu.tracking import tracked_run
 
 
 def export(cfg):
+    with tracked_run(cfg, "export") as tracker:
+        return _export(cfg, tracker)
+
+
+def _export(cfg, tracker):
     eval_dir = artifact_path(cfg, "eval")
     state = torch.load(eval_dir / "selected.pt", map_location="cpu", weights_only=True)
     metrics = json.loads((eval_dir / "metrics.json").read_text(encoding="utf-8"))
@@ -40,4 +47,6 @@ def export(cfg):
     model, sp2, recorded = load_for_inference(out, "cpu")
     print(recorded)
     print(translate(model, sp2, ["Can I get your contact number?"], beam_size=2))
+    tracker.set_tags({"exported_sha256": sha256_file(out), "eval_sha256": eval_fingerprint(cfg["paths"]["eval_dir"])})
+    tracker.log_artifact(out, "model")  # the file the app serves; the gate registers it from here
     return out

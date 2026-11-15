@@ -14,3 +14,5 @@ artifacts/
 *.egg-info/
 mlruns/
 data/smoke/
+mlflow.db
+mlartifacts/
