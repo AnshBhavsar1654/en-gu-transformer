@@ -21,7 +21,7 @@ except ModuleNotFoundError:  # package not pip-installed: use the copy in this r
 MODEL_PATH = os.path.join(APP_DIR, "best.pt")  # downloaded from the Kaggle training output
 # Only for best.pt files from runs before the checkpoint became self-contained
 SPM_PATH = os.path.join(APP_DIR, "spm_en_gu.model")
-HF_REPO_ID = "anshbhavsar2674/english-gujarati-transformer"  # used when best.pt isn't next to app.py
+HF_REPO_ID = "ansh164/english-gujarati-transformer"  # used when best.pt isn't next to app.py
 MAX_CHARS = 2000
 HISTORY_SIZE = 20
 

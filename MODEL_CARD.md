@@ -75,6 +75,6 @@ improve, not a target.
 ## Maintenance
 
 - Every model is registered with its code version, data fingerprints, hyperparameters, training curve and scores
-  (MLflow registry; see the README).
+  (MLflow registry; see the repository README).
 - A new model replaces the served one only if it passes the promotion gate (quality overall and by sentence length,
   size, latency) on the frozen evaluation set. The previous champion is kept for rollback.
