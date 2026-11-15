@@ -8,9 +8,8 @@ import json
 import re
 from pathlib import Path
 
-import torch
-
 from en_gu import registry
+from en_gu.checkpoint import embedded_metrics
 from en_gu.data import sha256_file
 from en_gu.tracking import describe_run
 
@@ -59,10 +58,6 @@ def parse_notebook(path):
         "selected_checkpoint": selected[1].strip() if selected else None,
         "test_sentences": int(size[1]) if size else None,
     }
-
-
-def embedded_metrics(checkpoint):
-    return torch.load(checkpoint, map_location="cpu", weights_only=True).get("metrics", {})
 
 
 def _ensure_champion(cfg, version, make_champion):

@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from en_gu.checkpoint import atomic_save, save_for_app, spm_tensor
 from en_gu.config import artifact_path, model_config
-from en_gu.data import PairDataset, TokenBatchSampler, collate, load_eval_set, read_lines
+from en_gu.data import PairDataset, TokenBatchSampler, collate, eval_fingerprint, load_eval_set, read_lines
 from en_gu.evaluate import score_translations, validation_loss
 from en_gu.model import PAD_IDX, Transformer
 from en_gu.tokenizer import check_tokenizer, load_tokenizer, spm_model_path
@@ -81,6 +81,7 @@ def _train(cfg, tracker):
     snapshot_dir = out_dir / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     config = model_config(cfg)
+    eval_sha256 = eval_fingerprint(cfg["paths"]["eval_dir"])
 
     # ---- data ----
     sp = load_tokenizer(spm_model_path(cfg))
@@ -239,7 +240,12 @@ def _train(cfg, tracker):
                         config,
                         model.state_dict(),
                         sp,
-                        {"checkpoint": f"step {step}", "train_updates": step, "val_loss": round(val_loss, 4)},
+                        {
+                            "checkpoint": f"step {step}",
+                            "train_updates": step,
+                            "val_loss": round(val_loss, 4),
+                            "eval_sha256": eval_sha256,
+                        },
                     )
                 else:
                     bad_evals += 1

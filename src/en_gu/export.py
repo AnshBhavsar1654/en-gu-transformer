@@ -30,15 +30,13 @@ def _export(cfg, tracker):
         state,
         sp,
         {
-            k: metrics[k]
-            for k in (
-                "checkpoint",
-                "train_updates",
-                "test_bleu",
-                "test_chrf",
-                "test_ter",
-                "test_sentences",
-            )
+            **{
+                k: metrics[k]
+                for k in ("checkpoint", "train_updates", "test_bleu", "test_chrf", "test_ter", "test_sentences")
+            },
+            # Which frozen eval set the scores are on. The promotion gate uses it to check that this model
+            # was trained without those sentences.
+            "eval_sha256": eval_fingerprint(cfg["paths"]["eval_dir"]),
         },
     )
     print(f"Saved {out} ({out.stat().st_size / 1e6:.0f} MB)")

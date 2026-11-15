@@ -130,3 +130,27 @@ def download_checkpoint(cfg, version):
     if expected is not None and sha256_file(path) != expected:
         raise RuntimeError(f"Checkpoint for version {version.version} does not match its recorded hash.")
     return path
+
+
+def log_gate_run(cfg, report, candidate_sha256):
+    """Keep the gate's verdict (and the numbers behind it) in MLflow, whether or not the candidate passed."""
+    _, experiment_id = configure(cfg)
+    champion = report.get("champion_overall") or {}
+    with mlflow.start_run(experiment_id=experiment_id, run_name=f"gate-{candidate_sha256[:8]}") as run:
+        mlflow.set_tags(
+            {
+                "stage": "gate",
+                "candidate_sha256": candidate_sha256,
+                "gate": "passed" if report["passed"] else "rejected",
+                "comparison": report["mode"],
+            }
+        )
+        mlflow.log_metrics(
+            {
+                "candidate_chrf": report["candidate"]["overall"]["chrf"],
+                "candidate_bleu": report["candidate"]["overall"]["bleu"],
+                **{f"champion_{k}": v for k, v in champion.items() if k in ("chrf", "bleu")},
+            }
+        )
+        mlflow.log_dict(report, "gate_report.json")
+    return run.info.run_id

@@ -1,7 +1,7 @@
 """`python -m en_gu <stage>`: run one pipeline stage, or all of them.
 
 Stages: prepare -> tokenizer -> train -> evaluate -> export. `score` evaluates any exported checkpoint;
-`backfill-run1` and `registry` manage the model registry.
+`promote`, `backfill-run1` and `registry` manage the model registry.
 """
 
 import argparse
@@ -64,6 +64,20 @@ def build_parser():
     backfill.add_argument("--checkpoint", default="best.pt")
     backfill.add_argument("--notebook", default="notebooks/archive/run1-gujarati-english-translation.ipynb")
 
+    promote = sub.add_parser(
+        "promote", parents=[common], help="run the promotion gate on a candidate; promote it if it passes"
+    )
+    promote.add_argument("--candidate", default=None, help="checkpoint to judge (default: <artifacts>/best.pt)")
+    promote.add_argument("--beam", type=int, default=None, help="beam size to score with (default: evaluate.beam_size)")
+    promote.add_argument("--limit", type=int, default=None, help="score only the first N test sentences (dry run)")
+    promote.add_argument("--dry-run", action="store_true", help="show the verdict without touching the registry")
+    promote.add_argument("--no-latency", action="store_true", help="skip the latency comparison")
+    promote.add_argument(
+        "--assume-isolated",
+        action="store_true",
+        help="treat the candidate as trained without the eval sentences even though its checkpoint doesn't say so",
+    )
+
     registry = sub.add_parser("registry", parents=[common], help="show registry versions, or roll back")
     registry.add_argument("--rollback", action="store_true", help="make the previous version the champion again")
     return parser
@@ -80,6 +94,19 @@ def main(argv=None):
         from en_gu.backfill import backfill
 
         backfill(cfg, args.checkpoint, args.notebook)
+    elif args.command == "promote":
+        from en_gu.promote import promote
+
+        report = promote(
+            cfg,
+            args.candidate,
+            beam_size=args.beam,
+            limit=args.limit,
+            dry_run=args.dry_run,
+            with_latency=not args.no_latency,
+            assume_isolated=args.assume_isolated,
+        )
+        return 0 if report["passed"] else 1
     elif args.command == "registry":
         from en_gu.registry_cli import show_registry
 

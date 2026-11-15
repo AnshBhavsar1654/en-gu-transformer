@@ -42,3 +42,9 @@ def average_state_dicts(paths):
             for k in avg:
                 avg[k] += state[k].float()
     return {k: v / len(paths) for k, v in avg.items()}
+
+
+def embedded_metrics(checkpoint):
+    """The metrics dict stored inside an exported checkpoint (empty for bare weights)."""
+    ckpt = torch.load(checkpoint, map_location="cpu", weights_only=True)
+    return ckpt.get("metrics", {}) if "model_state_dict" in ckpt else {}

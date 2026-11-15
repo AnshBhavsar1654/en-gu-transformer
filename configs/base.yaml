@@ -57,3 +57,22 @@ tracking:                      # MLflow experiment tracking + model registry (ne
   artifact_root: mlartifacts
   experiment: en-gu-nmt
   registered_model: en-gu-translator
+
+gate:                          # promotion gate: when may a candidate replace the champion? (calibrate with real runs)
+  tolerance:                   # allowed drop vs the champion, scored on the same frozen eval set (points)
+    chrf: 0.5
+    bleu: 0.5
+    slice_chrf: 1.5            # per length bucket; small buckets are noisy, so this is looser
+  reference_tolerance:         # used when the champion was scored on a different test set (e.g. run 1 on Kaggle)
+    chrf: 1.5
+    bleu: 1.0
+  slices:                      # English-source length buckets, in words: [min, max] (null = no upper bound)
+    short: [1, 10]
+    medium: [11, 25]
+    long: [26, null]
+  min_slice_sentences: 30      # smaller buckets are reported but not enforced
+  max_model_mb: 300            # size budget of the exported checkpoint
+  max_latency_ratio: 1.25      # candidate p95 may be at most this multiple of the champion's, measured together
+  max_latency_ms: null         # optional absolute p95 budget per sentence (CPU, beam as scored)
+  latency_sentences: 40
+  require_isolated_candidate: true   # a candidate must have been trained without the frozen eval sentences
