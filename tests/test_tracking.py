@@ -4,27 +4,9 @@ from pathlib import Path
 import pytest
 
 from en_gu.cli import STAGES, run_stage
-from en_gu.config import deep_merge
 from en_gu.tracking import Tracker, configure, flatten, git_info, resolve_uri, tracked_run
 
 mlflow = pytest.importorskip("mlflow")
-
-
-def with_tracking(cfg, tmp_path):
-    return type(cfg)(
-        deep_merge(
-            cfg,
-            {
-                "tracking": {
-                    "enabled": True,
-                    "uri": f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}",
-                    "artifact_root": str(tmp_path / "mlartifacts"),
-                    "experiment": "test",
-                    "registered_model": "test-model",
-                }
-            },
-        )
-    )
 
 
 def test_flatten_nests_with_dots():
@@ -50,27 +32,27 @@ def test_disabled_tracker_is_a_silent_no_op(tiny_cfg):
         assert not tracker.enabled and tracker.run_id is None
 
 
-def test_failing_store_does_not_break_the_run(tiny_cfg, tmp_path, monkeypatch):
+def test_failing_store_does_not_break_the_run(tracking_cfg, monkeypatch):
     def broken(cfg):
         raise RuntimeError("store is down")
 
     monkeypatch.setattr("en_gu.tracking.configure", broken)
-    tracker = Tracker(with_tracking(tiny_cfg, tmp_path), "train")
+    tracker = Tracker(tracking_cfg, "train")
     tracker.log_metrics({"m": 1.0})  # must not raise
     assert not tracker.enabled
 
 
-def test_store_in_a_new_folder_is_created(tiny_cfg, tmp_path):
-    cfg = with_tracking(tiny_cfg, tmp_path)
+def test_store_in_a_new_folder_is_created(tracking_cfg, tmp_path):
+    cfg = tracking_cfg
     cfg["tracking"]["uri"] = f"sqlite:///{(tmp_path / 'new' / 'dir' / 'mlflow.db').as_posix()}"
     client, experiment_id = configure(cfg)
     assert experiment_id and (tmp_path / "new" / "dir" / "mlflow.db").exists()
 
 
 @pytest.mark.slow
-def test_stages_report_into_one_run(tiny_cfg, tmp_path):
+def test_stages_report_into_one_run(tracking_cfg):
     pytest.importorskip("sacrebleu")
-    cfg = with_tracking(tiny_cfg, tmp_path)
+    cfg = tracking_cfg
     for stage in STAGES:
         run_stage(stage, cfg)
 

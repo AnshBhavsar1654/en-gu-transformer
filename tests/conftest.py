@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import sentencepiece as spm
 
-from en_gu.config import load_config
+from en_gu.config import deep_merge, load_config
 from en_gu.model import BOS_IDX, EOS_IDX, PAD_IDX, UNK_IDX, Transformer
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "configs"
@@ -96,3 +96,16 @@ def tiny_model():
 
     torch.manual_seed(0)
     return Transformer(vocab_size=400, **TINY_MODEL).eval()
+
+
+@pytest.fixture
+def tracking_cfg(tiny_cfg, tmp_path):
+    """tiny_cfg with MLflow switched on against a throw-away store under tmp_path."""
+    tracking = {
+        "enabled": True,
+        "uri": f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}",
+        "artifact_root": str(tmp_path / "mlartifacts"),
+        "experiment": "test",
+        "registered_model": "test-model",
+    }
+    return type(tiny_cfg)(deep_merge(tiny_cfg, {"tracking": tracking}))

@@ -1,6 +1,7 @@
 """`python -m en_gu <stage>`: run one pipeline stage, or all of them.
 
-Stages: prepare -> tokenizer -> train -> evaluate -> export. `score` evaluates any exported checkpoint.
+Stages: prepare -> tokenizer -> train -> evaluate -> export. `score` evaluates any exported checkpoint;
+`backfill-run1` and `registry` manage the model registry.
 """
 
 import argparse
@@ -56,6 +57,15 @@ def build_parser():
     score.add_argument("--beam", type=int, default=5)
     score.add_argument("--limit", type=int, default=None, help="only score the first N sentences")
     score.add_argument("--spm", default=None, help="tokenizer for weights-only checkpoints")
+
+    backfill = sub.add_parser(
+        "backfill-run1", parents=[common], help="register the Kaggle run 1 model as version 1 of the registry"
+    )
+    backfill.add_argument("--checkpoint", default="best.pt")
+    backfill.add_argument("--notebook", default="notebooks/archive/run1-gujarati-english-translation.ipynb")
+
+    registry = sub.add_parser("registry", parents=[common], help="show registry versions, or roll back")
+    registry.add_argument("--rollback", action="store_true", help="make the previous version the champion again")
     return parser
 
 
@@ -66,6 +76,14 @@ def main(argv=None):
         from en_gu.evaluate import score_checkpoint
 
         score_checkpoint(args.checkpoint, cfg, args.split, args.beam, args.limit, args.spm)
+    elif args.command == "backfill-run1":
+        from en_gu.backfill import backfill
+
+        backfill(cfg, args.checkpoint, args.notebook)
+    elif args.command == "registry":
+        from en_gu.registry_cli import show_registry
+
+        show_registry(cfg, rollback=args.rollback)
     else:
         for name in STAGES if args.command == "all" else (args.command,):
             print(f"\n=== {name} ===")
