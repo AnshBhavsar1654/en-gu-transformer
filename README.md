@@ -26,6 +26,7 @@ improving around epoch 17 (≈ 2.43), so more epochs on the same data won't help
 direct next step.
 
 The training log and outputs of this run are kept in `notebooks/archive/run1-gujarati-english-translation.ipynb`.
+See [MODEL_CARD.md](MODEL_CARD.md) for intended use, data, limitations and the caveats on these numbers.
 
 ## Model
 
@@ -86,7 +87,7 @@ The training code is a Python package (`src/en_gu/`) driven by YAML configs, so 
 command line on any machine, not only in a notebook.
 
 ```bash
-pip install -e ".[serve,train,dev]"     # package + training + test/lint tools
+pip install -e ".[serve,train,tracking,dev]"     # package + training + MLflow + test/lint tools
 ```
 
 | Stage | Command | What it does | Main outputs |
@@ -116,6 +117,40 @@ file on top (`--config configs/base.yaml --config configs/smoke.yaml`) or overri
 > that appear in the locally generated eval set, so its scores there would be too optimistic. Its published scores
 > (above) come from the Kaggle test set. Compare future models against each other on `data/eval/`.
 
+### Tracking, registry and promotion gate
+
+Every pipeline run is logged to MLflow (hyperparameters, git commit, fingerprints of the training and eval data,
+the training curve, test scores and `best.pt`) in a local SQLite store (`mlflow.db` and `mlartifacts/`, both
+gitignored). Browse it with `mlflow ui --backend-store-uri sqlite:///mlflow.db`. Tracking never stops a run: if
+MLflow is missing or unreachable it logs a warning and carries on (`--set tracking.enabled=false` turns it off).
+
+Models are kept in a registry. The alias `champion` marks the model to serve; `previous` keeps the one it replaced so
+a rollback is one command. A new model becomes the champion only by passing the **promotion gate**:
+
+```bash
+python -m en_gu backfill-run1                  # once: register the Kaggle run 1 model (best.pt) as version 1
+python -m en_gu promote                        # judge artifacts/best.pt against the champion
+python -m en_gu promote --limit 200 --beam 1   # quick dry run on part of the test set; never changes the registry
+python -m en_gu registry                       # list versions and aliases
+python -m en_gu registry --rollback            # make the previous version the champion again
+```
+
+`promote` exits with a non-zero code when the candidate is rejected, so it can gate a CI job. The rules (thresholds
+are in the `gate:` section of `configs/base.yaml`):
+
+| Check | Rule |
+|---|---|
+| Isolation | The candidate must have been trained without the frozen eval sentences (its checkpoint records which eval set it was trained against) |
+| Quality | chrF++ and BLEU on the frozen test set may not drop more than 0.5 below the champion |
+| Length buckets | chrF++ in each bucket (short ≤ 10, medium 11–25, long ≥ 26 words) may not drop more than 1.5; buckets under 30 sentences are reported but not enforced |
+| Size | Checkpoint at most 300 MB |
+| Latency | p95 per sentence on CPU at most 1.25× the champion's, measured in the same run (optional absolute budget) |
+
+Run 1 was trained on a split that overlaps the frozen eval set, so its scores there are inflated. While run 1 is the
+champion, a candidate is compared against run 1's published Kaggle scores with a wider tolerance (chrF++ 1.5, BLEU 1.0)
+and the length-bucket check is skipped. After the first model trained with this pipeline is promoted, comparisons
+become like for like.
+
 ### Training on Kaggle
 
 Open `notebooks/kaggle_runner.ipynb` on Kaggle (GPU T4 ×2, Internet on, the dataset above as input) and
@@ -124,15 +159,20 @@ at `/kaggle/working`. Download `/kaggle/working/best.pt` afterwards; while train
 refreshed whenever validation improves, so you can grab an intermediate model. To continue a previous run, set
 `train.resume_checkpoint` to its `artifacts/train/last.pt` in the notebook's Settings cell.
 
+MLflow tracking is switched off on Kaggle. After downloading `best.pt`, judge and register it locally with
+`python -m en_gu promote --candidate best.pt`: the checkpoint records which eval set it was trained against, which is
+what the gate's isolation check reads.
+
 ### Tests and linting
 
 ```bash
-python -m pytest        # 41 tests, ~30 s on CPU, no data or model download needed
+python -m pytest        # 77 tests, ~1 min on CPU, no data or model download needed
 python -m ruff check .
 ```
 
 The tests cover config handling, corpus cleaning, the leak-free split and frozen eval set, batching, the model and
-decoding, checkpoint loading, and the full pipeline on a small synthetic corpus. `pre-commit install` enables the
+decoding, checkpoint loading, experiment tracking, the registry, the promotion gate, and the full pipeline on a small
+synthetic corpus. `pre-commit install` enables the
 same checks (plus a guard against committing large files such as checkpoints) before each commit.
 
 ## Publish the model to Hugging Face (optional)
@@ -148,12 +188,14 @@ Uploads `best.pt` to the repo named in the script and asks for your token. Don't
 ```
 app.py                   Streamlit front end
 src/en_gu/               Package: model.py (Transformer, decoding, loader), data.py, tokenizer.py,
-                         train.py, evaluate.py, export.py, config.py, cli.py
+                         train.py, evaluate.py, export.py, config.py, cli.py,
+                         tracking.py, registry.py, gate.py, promote.py, backfill.py
 configs/                 base.yaml (run 1 hyperparameters), smoke.yaml (tiny CPU run)
 tests/                   pytest suite
 notebooks/kaggle_runner.ipynb    Thin notebook that runs the pipeline on Kaggle
 notebooks/archive/       Run 1 notebook with its training log
 dvc.yaml                 The pipeline as DVC stages
+MODEL_CARD.md            Intended use, data, evaluation caveats and limitations
 upload_model.py          Push best.pt to Hugging Face
 pyproject.toml  Makefile  .pre-commit-config.yaml  requirements.txt
 ```
