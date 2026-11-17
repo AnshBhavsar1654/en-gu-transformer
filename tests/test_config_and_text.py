@@ -2,12 +2,29 @@ import pytest
 import yaml
 
 from en_gu.config import deep_merge, load_config, model_config, parse_override
-from en_gu.textutils import normalize_text
+from en_gu.textutils import join_sentences, normalize_text, split_sentences
 
 
 def test_normalize_text_collapses_whitespace():
     assert normalize_text("  hello \t world\n again  ") == "hello world again"
     assert normalize_text("") == ""
+
+
+def test_split_sentences_keeps_the_paragraph_layout():
+    text = "Hello there. How are you?\n\nI am fine!  Thanks"
+    layout, sentences = split_sentences(text)
+    assert sentences == ["Hello there.", "How are you?", "I am fine!", "Thanks"]
+    assert layout == [2, 0, 2]
+    assert join_sentences(layout, [s.upper() for s in sentences]) == "HELLO THERE. HOW ARE YOU?\n\nI AM FINE! THANKS"
+
+
+def test_split_sentences_does_not_split_inside_numbers():
+    assert split_sentences("It costs 2.50 rupees.")[1] == ["It costs 2.50 rupees."]
+
+
+def test_join_sentences_rejects_a_wrong_count():
+    with pytest.raises(ValueError):
+        join_sentences([2], ["only one"])
 
 
 def test_deep_merge_is_recursive_and_does_not_mutate():

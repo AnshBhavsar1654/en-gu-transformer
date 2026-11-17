@@ -3,7 +3,6 @@ import csv
 import html
 import io
 import os
-import re
 import sys
 import time
 from datetime import datetime
@@ -14,9 +13,11 @@ import torch
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 try:
     from en_gu.model import load_for_inference, translate
+    from en_gu.textutils import join_sentences, split_sentences
 except ModuleNotFoundError:  # package not pip-installed: use the copy in this repo
     sys.path.insert(0, os.path.join(APP_DIR, "src"))
     from en_gu.model import load_for_inference, translate
+    from en_gu.textutils import join_sentences, split_sentences
 
 MODEL_PATH = os.path.join(APP_DIR, "best.pt")  # downloaded from the Kaggle training output
 # Only for best.pt files from runs before the checkpoint became self-contained
@@ -100,20 +101,13 @@ def load_model(version):
     return model, sp, metrics, device
 
 
-SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
-
-
 @st.cache_data(show_spinner=False, max_entries=512)
 def translate_text(text, beam_size, version):
     """The model is trained on single sentences, so split paragraphs into sentences first."""
     model, sp, _, _ = load_model(version)
-    layout, sentences = [], []
-    for paragraph in text.split("\n"):
-        parts = [s for s in SENTENCE_END.split(paragraph.strip()) if s]
-        layout.append(len(parts))
-        sentences.extend(parts)
-    outputs = iter(translate(model, sp, sentences, beam_size=beam_size)) if sentences else iter(())
-    return "\n".join(" ".join(next(outputs) for _ in range(n)) for n in layout), len(sentences)
+    layout, sentences = split_sentences(text)
+    outputs = translate(model, sp, sentences, beam_size=beam_size) if sentences else []
+    return join_sentences(layout, outputs), len(sentences)
 
 
 def init_state():
