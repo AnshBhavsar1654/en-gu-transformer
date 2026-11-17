@@ -1,4 +1,9 @@
-"""Streamlit front end for the English -> Gujarati Transformer trained by the en_gu pipeline."""
+"""Streamlit front end for the English -> Gujarati Transformer trained by the en_gu pipeline.
+
+By default the app is a thin client of the inference API (`python -m en_gu serve`, or `docker compose up`), set by
+EN_GU_API_URL. With STANDALONE=1 it loads the model in-process instead, for quick local use without the API.
+"""
+
 import csv
 import html
 import io
@@ -8,21 +13,24 @@ import time
 from datetime import datetime
 
 import streamlit as st
-import torch
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 try:
-    from en_gu.model import load_for_inference, translate
-    from en_gu.textutils import join_sentences, split_sentences
+    import en_gu  # noqa: F401
 except ModuleNotFoundError:  # package not pip-installed: use the copy in this repo
     sys.path.insert(0, os.path.join(APP_DIR, "src"))
-    from en_gu.model import load_for_inference, translate
-    from en_gu.textutils import join_sentences, split_sentences
 
+STANDALONE = os.environ.get("STANDALONE", "0").lower() in ("1", "true", "yes")
+API_URL = os.environ.get("EN_GU_API_URL", "http://localhost:8000").rstrip("/")
+API_TIMEOUT = float(os.environ.get("EN_GU_API_TIMEOUT", "120"))
+
+# Standalone mode only
 MODEL_PATH = os.path.join(APP_DIR, "best.pt")  # downloaded from the Kaggle training output
 # Only for best.pt files from runs before the checkpoint became self-contained
 SPM_PATH = os.path.join(APP_DIR, "spm_en_gu.model")
 HF_REPO_ID = "ansh164/english-gujarati-transformer"  # used when best.pt isn't next to app.py
+FEEDBACK_DB = os.path.join(APP_DIR, "data", "feedback", "feedback.db")
+
 MAX_CHARS = 2000
 HISTORY_SIZE = 20
 
@@ -85,29 +93,116 @@ st.markdown(
 )
 
 
-def model_version():
+class BackendError(Exception):
+    """A translation backend problem, with a message that can be shown to the user as is."""
+
+
+class ApiBackend:
+    """Talks to the FastAPI service."""
+
+    mode = "API"
+
+    def __init__(self, url):
+        import httpx
+
+        self.url = url
+        self.client = httpx.Client(base_url=url, timeout=API_TIMEOUT)
+
+    def _call(self, method, path, **kwargs):
+        import httpx
+
+        try:
+            response = self.client.request(method, path, **kwargs)
+        except httpx.HTTPError as exc:
+            raise BackendError(f"Cannot reach the translation API at {self.url} ({type(exc).__name__}).") from exc
+        if response.status_code >= 400:
+            try:
+                detail = response.json().get("detail", response.text)
+            except ValueError:
+                detail = response.text
+            raise BackendError(f"{detail} (HTTP {response.status_code})")
+        return response.json()
+
+    def info(self):
+        return self._call("GET", "/info")
+
+    def translate(self, text, beam_size):
+        return self._call("POST", "/translate", json={"text": text, "beam_size": beam_size})
+
+    def feedback(self, payload):
+        return self._call("POST", "/feedback", json=payload)
+
+
+class LocalBackend:
+    """Loads the model into this process (STANDALONE=1)."""
+
+    mode = "standalone"
+
+    def __init__(self):
+        self.translator = load_local_translator(local_model_mtime())
+        from en_gu.feedback import FeedbackStore
+
+        self.store = FeedbackStore(FEEDBACK_DB, retention_days=90)
+
+    def info(self):
+        return self.translator.info()
+
+    def translate(self, text, beam_size):
+        translation, n_sentences, latency_ms = cached_local_translation(text, beam_size, local_model_mtime())
+        import uuid
+
+        return {
+            "request_id": uuid.uuid4().hex,
+            "translation": translation,
+            "model_version": self.translator.version,
+            "latency_ms": latency_ms,
+            "n_sentences": n_sentences,
+        }
+
+    def feedback(self, payload):
+        corrected = payload.get("corrected_translation")
+        text = (payload.get("source_text"), payload.get("translation")) if corrected else (None, None)
+        self.store.add(payload["request_id"], payload["rating"], payload.get("model_version"), *text, corrected)
+        return {"stored_text": corrected is not None}
+
+
+def local_model_mtime():
     """Changes whenever best.pt is replaced, so a newer download is picked up without a restart."""
     return os.path.getmtime(MODEL_PATH) if os.path.exists(MODEL_PATH) else None
 
 
 @st.cache_resource(show_spinner="Loading translation model…", max_entries=1)
-def load_model(version):
+def load_local_translator(mtime):
+    import torch
+
+    from en_gu.model import load_for_inference
+    from en_gu.serving import Translator, file_version
+
+    start = time.perf_counter()
     path = MODEL_PATH
-    if version is None:
+    if mtime is None:
         from huggingface_hub import hf_hub_download
+
         path = hf_hub_download(HF_REPO_ID, os.path.basename(MODEL_PATH))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, sp, metrics = load_for_inference(path, device, spm_path=SPM_PATH)
-    return model, sp, metrics, device
+    source = "path" if mtime is not None else "hub"
+    return Translator(model, sp, file_version(path), metrics, device, time.perf_counter() - start, source)
 
 
 @st.cache_data(show_spinner=False, max_entries=512)
-def translate_text(text, beam_size, version):
-    """The model is trained on single sentences, so split paragraphs into sentences first."""
-    model, sp, _, _ = load_model(version)
-    layout, sentences = split_sentences(text)
-    outputs = translate(model, sp, sentences, beam_size=beam_size) if sentences else []
-    return join_sentences(layout, outputs), len(sentences)
+def cached_local_translation(text, beam_size, mtime):
+    result = load_local_translator(mtime).translate_text(text, beam_size)
+    return result.translation, result.n_sentences, result.latency_ms
+
+
+@st.cache_resource(max_entries=1)
+def get_api_backend(url):
+    return ApiBackend(url)
+
+
+def get_backend():
+    return LocalBackend() if STANDALONE else get_api_backend(API_URL)
 
 
 def init_state():
@@ -126,19 +221,44 @@ def clear_input():
     st.session_state.result = None
 
 
-def run_translation(text, beam_size):
+def run_translation(backend, text, beam_size):
     start = time.perf_counter()
-    translation, n_sentences = translate_text(text, beam_size, model_version())
+    try:
+        response = backend.translate(text, beam_size)
+    except BackendError as exc:
+        st.error(f"Translation failed: {exc}")
+        return
     elapsed = time.perf_counter() - start
     st.session_state.result = {
-        "english": text, "gujarati": translation, "seconds": elapsed,
-        "sentences": n_sentences, "beam": beam_size,
+        "english": text,
+        "gujarati": response["translation"],
+        "seconds": elapsed,
+        "sentences": response["n_sentences"],
+        "beam": beam_size,
+        "request_id": response["request_id"],
+        "model_version": response["model_version"],
+        "feedback": None,
     }
     history = st.session_state.history
     if not history or history[0]["english"] != text:
-        history.insert(0, {"english": text, "gujarati": translation,
-                           "time": datetime.now().strftime("%H:%M:%S")})
+        history.insert(
+            0, {"english": text, "gujarati": response["translation"], "time": datetime.now().strftime("%H:%M:%S")}
+        )
         del history[HISTORY_SIZE:]
+
+
+def send_feedback(backend, rating, correction=None):
+    result = st.session_state.result
+    payload = {"request_id": result["request_id"], "rating": rating, "model_version": result["model_version"]}
+    if correction:
+        payload.update(corrected_translation=correction, source_text=result["english"], translation=result["gujarati"])
+    try:
+        backend.feedback(payload)
+    except BackendError as exc:
+        st.toast(f"Feedback not sent: {exc}", icon="⚠️")
+        return
+    result["feedback"] = "correction" if correction else rating
+    st.toast("Thanks for the feedback!", icon="🙏")
 
 
 def history_csv():
@@ -149,36 +269,70 @@ def history_csv():
     return buffer.getvalue().encode("utf-8-sig")  # BOM so Excel shows Gujarati correctly
 
 
-def render_sidebar(model, metrics, device):
+def render_sidebar(backend, info):
     with st.sidebar:
         st.header("⚙️ Settings")
+        limits = info.get("limits", {})
         beam_size = st.slider(
-            "Beam size", 1, 8, 5,
+            "Beam size",
+            limits.get("min_beam", 1),
+            limits.get("max_beam", 8),
+            limits.get("default_beam", 5),
             help="How many candidate translations are explored. 1 = greedy (fastest); 4–6 is usually best.",
         )
 
         st.divider()
         st.header("🧠 Model")
-        n_params = sum(p.numel() for p in model.parameters()) / 1e6
+        metrics, arch = info.get("metrics", {}), info.get("architecture", {})
         col1, col2 = st.columns(2)
-        col1.metric("Parameters", f"{n_params:.0f}M")
-        col2.metric("Device", device.upper())
+        col1.metric("Parameters", f"{info['parameters'] / 1e6:.0f}M")
+        col2.metric("Device", info["device"].upper())
         if metrics.get("test_bleu") is not None:
             col1.metric("Test BLEU", f"{metrics['test_bleu']:.1f}")
             col2.metric("Test chrF++", f"{metrics['test_chrf']:.1f}")
         st.caption(
-            f"Transformer encoder-decoder · {len(model.encoder_layers)}+{len(model.decoder_layers)} layers · "
-            f"d_model {model.d_model} · SentencePiece vocab {model.embedding.num_embeddings:,}"
+            f"Transformer encoder-decoder · {arch.get('encoder_layers')}+{arch.get('decoder_layers')} layers · "
+            f"d_model {arch.get('d_model')} · SentencePiece vocab {arch.get('vocab_size', 0):,}"
         )
+        where = f"API at {API_URL}" if backend.mode == "API" else "in-process (standalone)"
+        st.caption(f"Model version `{info['model_version']}` · served {where}")
 
         st.divider()
         if st.session_state.history:
-            st.download_button("⬇️ Download history (CSV)", history_csv(), "translations.csv",
-                               "text/csv", use_container_width=True)
+            st.download_button(
+                "⬇️ Download history (CSV)", history_csv(), "translations.csv", "text/csv", use_container_width=True
+            )
             if st.button("🗑️ Clear history", use_container_width=True):
                 st.session_state.history = []
                 st.rerun()
     return beam_size
+
+
+def render_feedback(backend, result):
+    if result["feedback"]:
+        st.caption("✅ Feedback recorded, thank you.")
+        return
+    c1, c2, _ = st.columns([1, 1, 4])
+    if c1.button("👍", key=f"up_{result['request_id']}", help="Good translation", use_container_width=True):
+        send_feedback(backend, "up")
+        st.rerun()
+    if c2.button("👎", key=f"down_{result['request_id']}", help="Poor translation", use_container_width=True):
+        send_feedback(backend, "down")
+        st.rerun()
+    with st.expander("✏️ Suggest a better translation"):
+        with st.form(f"correction_{result['request_id']}", border=False):
+            correction = st.text_area("Your translation", value=result["gujarati"], height=120)
+            st.caption(
+                "Submitting stores your English text, the model's output and your correction (for up to 90 days) "
+                "so they can be reviewed and used to improve the model. Thumbs up/down store no text."
+            )
+            if st.form_submit_button("Submit correction"):
+                correction = correction.strip()
+                if correction and correction != result["gujarati"].strip():
+                    send_feedback(backend, "down", correction)
+                    st.rerun()
+                else:
+                    st.toast("Edit the translation before submitting.", icon="✍️")
 
 
 def main():
@@ -191,7 +345,14 @@ def main():
     )
 
     try:
-        model, _, metrics, device = load_model(model_version())
+        backend = get_backend()
+        info = backend.info()
+    except BackendError as exc:
+        st.error(f"The translation service is not available: {exc}\n\nStart it with `python -m en_gu serve` or "
+                 "`docker compose up`, or run the app with `STANDALONE=1` to load the model in-process.")
+        if st.button("Retry"):
+            st.rerun()
+        st.stop()
     except Exception as exc:
         st.error(
             f"Could not load the model: {exc}\n\n"
@@ -199,14 +360,17 @@ def main():
         )
         st.stop()
 
-    beam_size = render_sidebar(model, metrics, device)
+    beam_size = render_sidebar(backend, info)
 
     left, right = st.columns(2, gap="large")
     with left:
         st.markdown('<div class="pane-label">English</div>', unsafe_allow_html=True)
         with st.form("translate_form", border=False):
             st.text_area(
-                "English text", key="src_text", height=238, max_chars=MAX_CHARS,
+                "English text",
+                key="src_text",
+                height=238,
+                max_chars=info.get("limits", {}).get("max_chars", MAX_CHARS),
                 label_visibility="collapsed",
                 placeholder="Type or paste English text…  (Ctrl+Enter to translate)",
             )
@@ -219,7 +383,7 @@ def main():
         st.session_state.auto_translate = False
         if text:
             with right, st.spinner("Translating…"):
-                run_translation(text, beam_size)
+                run_translation(backend, text, beam_size)
         elif submitted:
             st.toast("Enter some English text first.", icon="✍️")
 
@@ -227,24 +391,27 @@ def main():
         st.markdown('<div class="pane-label">Gujarati</div>', unsafe_allow_html=True)
         result = st.session_state.result
         if result:
-            st.markdown(f'<div class="output-card">{html.escape(result["gujarati"])}</div>',
-                        unsafe_allow_html=True)
+            st.markdown(f'<div class="output-card">{html.escape(result["gujarati"])}</div>', unsafe_allow_html=True)
             sentences = f"{result['sentences']} sentence{'s' if result['sentences'] != 1 else ''}"
             st.markdown(
-                f'<div class="stats">⏱ {result["seconds"]:.2f}s · {sentences} · beam {result["beam"]}</div>',
+                f'<div class="stats">⏱ {result["seconds"]:.2f}s · {sentences} · beam {result["beam"]} · '
+                f"model {html.escape(result['model_version'])}</div>",
                 unsafe_allow_html=True,
             )
+            render_feedback(backend, result)
             with st.expander("Copy text"):
                 st.code(result["gujarati"], language=None, wrap_lines=True)
         else:
-            st.markdown('<div class="output-card empty">Your translation will appear here.</div>',
-                        unsafe_allow_html=True)
+            st.markdown(
+                '<div class="output-card empty">Your translation will appear here.</div>', unsafe_allow_html=True
+            )
 
     st.markdown("#### ✨ Try an example")
     cols = st.columns(3)
     for i, sentence in enumerate(EXAMPLES):
-        cols[i % 3].button(sentence, key=f"example_{i}", on_click=use_example, args=(sentence,),
-                           use_container_width=True)
+        cols[i % 3].button(
+            sentence, key=f"example_{i}", on_click=use_example, args=(sentence,), use_container_width=True
+        )
 
     if st.session_state.history:
         st.markdown("#### 🕘 Recent translations")

@@ -1,5 +1,12 @@
+# Everything needed to run the API and the Streamlit app from a source checkout (no pip install -e needed).
+# For development use `pip install -e ".[serve,train,tracking,dev]"` instead.
 streamlit>=1.40.0
+httpx>=0.27
 torch>=2.1.0
 numpy>=1.24.0
 sentencepiece>=0.2.0
+pyyaml>=6.0
 huggingface_hub>=0.20.0
+fastapi>=0.110
+uvicorn[standard]>=0.29
+prometheus-client>=0.20

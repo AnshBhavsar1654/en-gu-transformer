@@ -60,7 +60,7 @@ def resolve_device(name):
     return name
 
 
-def _file_version(path):
+def file_version(path):
     """Version label of a checkpoint file: from the sidecar written by `fetch-model`, else its content hash."""
     sidecar = Path(str(path) + VERSION_SUFFIX)
     if sidecar.exists():
@@ -79,7 +79,7 @@ def locate_model(cfg, settings):
         path = Path(mcfg["path"])
         if not path.exists():
             raise FileNotFoundError(f"Model file {path} not found (serve.model.path / EN_GU_MODEL_PATH).")
-        return path, _file_version(path)
+        return path, file_version(path)
     if source == "registry":
         from en_gu.registry import download_checkpoint, get_by_alias, model_name
 
