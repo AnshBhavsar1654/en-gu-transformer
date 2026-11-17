@@ -1,0 +1,30 @@
+# Keep the build context small: only src/, configs/, app.py, pyproject.toml, README.md and models/ are used.
+.git
+.github
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+*.egg-info
+
+# Secrets
+hf_token.txt
+.env
+
+# Data, training outputs and tracking stores
+en-gu
+data
+artifacts
+mlruns
+mlartifacts
+mlflow.db
+notebooks
+docs
+tests
+*.ipynb
+
+# Checkpoints outside models/ (models/best.pt is copied only by the api-baked target)
+/best.pt
+/transformer_en_gu.pth
+*.tmp

@@ -1,0 +1,44 @@
+# Local stack: inference API + Streamlit UI.
+#
+#   python -m en_gu fetch-model      # once: copy the registry champion to models/best.pt
+#   docker compose up --build
+#
+# UI: http://localhost:8501   API: http://localhost:8000/docs   Metrics: http://localhost:8000/metrics
+
+services:
+  api:
+    build:
+      context: .
+      target: api
+    image: en-gu-api:local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/models:ro          # best.pt (+ best.pt.version.json) from `python -m en_gu fetch-model`
+      - feedback:/data               # /feedback SQLite file survives restarts
+    environment:
+      EN_GU_MODEL_PATH: /models/best.pt
+    healthcheck:                     # ready = model loaded, so the UI starts only once translations work
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=4)"]
+      interval: 5s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      target: ui
+    image: en-gu-ui:local
+    ports:
+      - "8501:8501"
+    environment:
+      EN_GU_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  feedback:
