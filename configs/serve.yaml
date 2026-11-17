@@ -22,3 +22,4 @@ serve:
     default_beam: 5
     max_correction_chars: 4000
   feedback_db: data/feedback/feedback.db   # SQLite file for /feedback (created on first use)
+  feedback_retention_days: 90              # older feedback rows (and any text in them) are deleted

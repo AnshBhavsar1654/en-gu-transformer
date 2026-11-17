@@ -3,6 +3,7 @@
     POST /translate   {text, beam_size?} -> {request_id, translation, model_version, latency_ms, n_sentences}
     GET  /health      the process is up (liveness)
     GET  /ready       the model is loaded and requests can be served (readiness)
+    POST /feedback    {request_id, rating: up|down, corrected_translation?, ...} -> stored for the improvement loop
     GET  /info        model details and request limits
 
 Run it with `python -m en_gu serve` or `uvicorn --factory en_gu.api:create_app`. The model loads in a background
@@ -16,6 +17,7 @@ import re
 import threading
 import uuid
 from contextlib import asynccontextmanager
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -23,6 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from en_gu import __version__
 from en_gu.config import load_config
+from en_gu.feedback import FeedbackStore
 from en_gu.serving import SERVE_CONFIGS, Translator, serve_settings
 from en_gu.textutils import split_sentences
 
@@ -43,6 +46,22 @@ class TranslateResponse(BaseModel):
     model_version: str
     latency_ms: float
     n_sentences: int
+
+
+class FeedbackRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str = Field(pattern=REQUEST_ID.pattern, description="request_id of the /translate response")
+    rating: Literal["up", "down"]
+    model_version: str | None = Field(default=None, max_length=64, description="as returned by /translate")
+    corrected_translation: str | None = Field(default=None, description="the user's better translation")
+    source_text: str | None = Field(default=None, description="English input; only sent with a correction")
+    translation: str | None = Field(default=None, description="the model output being corrected")
+
+
+class FeedbackResponse(BaseModel):
+    feedback_id: int
+    stored_text: bool
 
 
 class ServiceState:
@@ -80,6 +99,7 @@ def create_app(cfg=None, translator=None, background=True):
     settings = serve_settings(cfg)
     limits = settings["limits"]
     state = ServiceState()
+    feedback_store = FeedbackStore(settings["feedback_db"], settings.get("feedback_retention_days"))
 
     @asynccontextmanager
     async def lifespan(app):
@@ -101,6 +121,7 @@ def create_app(cfg=None, translator=None, background=True):
     app.state.service = state
     app.state.cfg = cfg
     app.state.settings = settings
+    app.state.feedback = feedback_store
 
     @app.middleware("http")
     async def add_ids(request: Request, call_next):
@@ -150,5 +171,19 @@ def create_app(cfg=None, translator=None, background=True):
             latency_ms=round(result.latency_ms, 1),
             n_sentences=result.n_sentences,
         )
+
+    @app.post("/feedback", response_model=FeedbackResponse, status_code=201)
+    def feedback(body: FeedbackRequest):
+        corrected = (body.corrected_translation or "").strip() or None
+        if corrected and len(corrected) > limits["max_correction_chars"]:
+            raise HTTPException(422, detail=f"corrected_translation is longer than {limits['max_correction_chars']}")
+        for name in ("source_text", "translation"):
+            if len(getattr(body, name) or "") > limits["max_correction_chars"]:
+                raise HTTPException(422, detail=f"{name} is longer than {limits['max_correction_chars']}")
+        # Text is kept only alongside a correction (an explicit opt-in); a bare rating stores no text
+        source, translation = (body.source_text, body.translation) if corrected else (None, None)
+        version = body.model_version or (state.translator.version if state.translator else None)
+        feedback_id = feedback_store.add(body.request_id, body.rating, version, source, translation, corrected)
+        return FeedbackResponse(feedback_id=feedback_id, stored_text=corrected is not None)
 
     return app

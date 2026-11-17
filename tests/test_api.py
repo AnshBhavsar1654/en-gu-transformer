@@ -94,3 +94,61 @@ def test_a_model_that_fails_to_load_reports_not_ready_instead_of_crashing(serve_
         assert r.status_code == 503 and "missing.pt" in r.json()["error"]
         assert c.get("/health").status_code == 200
         assert "missing.pt" in c.post("/translate", json={"text": "Hi."}).json()["detail"]
+
+
+def test_thumbs_feedback_stores_no_text(client, serve_cfg):
+    from en_gu.feedback import FeedbackStore
+
+    tr = client.post("/translate", json={"text": "The train is late."}).json()
+    r = client.post(
+        "/feedback",
+        json={"request_id": tr["request_id"], "rating": "up", "source_text": "The train is late.", "translation": "x"},
+    )
+    assert r.status_code == 201 and r.json()["stored_text"] is False
+    (row,) = FeedbackStore(serve_cfg["serve"]["feedback_db"]).rows()
+    assert row["rating"] == "up" and row["model_version"] == tr["model_version"]
+    assert row["source_text"] is None and row["translation"] is None and row["corrected_translation"] is None
+
+
+def test_a_correction_stores_the_text_it_corrects(client, serve_cfg):
+    from en_gu.feedback import FeedbackStore
+
+    payload = {
+        "request_id": "r1",
+        "rating": "down",
+        "model_version": "v9",
+        "source_text": "Good morning.",
+        "translation": "ખરાબ",
+        "corrected_translation": " સુપ્રભાત. ",
+    }
+    assert client.post("/feedback", json=payload).json()["stored_text"] is True
+    store = FeedbackStore(serve_cfg["serve"]["feedback_db"])
+    (row,) = store.rows()
+    assert row["corrected_translation"] == "સુપ્રભાત." and row["source_text"] == "Good morning."
+    assert store.summary() == {"v9": {"up": 0, "down": 1, "corrections": 1}}
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"request_id": "r1", "rating": "meh"},
+        {"request_id": "has spaces", "rating": "up"},
+        {"request_id": "r1", "rating": "up", "corrected_translation": "x" * 4001},
+        {"request_id": "r1", "rating": "up", "extra": 1},
+    ],
+)
+def test_invalid_feedback_is_rejected(client, payload):
+    assert client.post("/feedback", json=payload).status_code == 422
+
+
+def test_old_feedback_is_deleted_after_the_retention_period(tmp_path):
+    import sqlite3
+
+    from en_gu.feedback import FeedbackStore
+
+    store = FeedbackStore(tmp_path / "f.db", retention_days=30)
+    store.add("old", "up")
+    with sqlite3.connect(store.path) as conn:
+        conn.execute("UPDATE feedback SET created_at = '2000-01-01T00:00:00+00:00'")
+    store.add("new", "down")
+    assert [r["request_id"] for r in store.rows()] == ["new"]
