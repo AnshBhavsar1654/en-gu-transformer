@@ -16,3 +16,5 @@ mlruns/
 data/smoke/
 mlflow.db
 mlartifacts/
+models/
+data/feedback/

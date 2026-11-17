@@ -1,7 +1,8 @@
 """`python -m en_gu <stage>`: run one pipeline stage, or all of them.
 
 Stages: prepare -> tokenizer -> train -> evaluate -> export. `score` evaluates any exported checkpoint;
-`promote`, `backfill-run1` and `registry` manage the model registry.
+`promote`, `backfill-run1` and `registry` manage the model registry; `fetch-model` copies a registry version out
+for serving.
 """
 
 import argparse
@@ -80,6 +81,12 @@ def build_parser():
 
     registry = sub.add_parser("registry", parents=[common], help="show registry versions, or roll back")
     registry.add_argument("--rollback", action="store_true", help="make the previous version the champion again")
+
+    fetch = sub.add_parser(
+        "fetch-model", parents=[common], help="copy a registry version's checkpoint to a file for serving"
+    )
+    fetch.add_argument("--out", default="models/best.pt")
+    fetch.add_argument("--alias", default="champion")
     return parser
 
 
@@ -111,6 +118,10 @@ def main(argv=None):
         from en_gu.registry_cli import show_registry
 
         show_registry(cfg, rollback=args.rollback)
+    elif args.command == "fetch-model":
+        from en_gu.serving import fetch_model
+
+        fetch_model(cfg, args.out, args.alias)
     else:
         for name in STAGES if args.command == "all" else (args.command,):
             print(f"\n=== {name} ===")

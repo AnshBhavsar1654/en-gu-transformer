@@ -1,0 +1,24 @@
+# Settings of the inference API (`python -m en_gu serve`). Layered on top of base.yaml, so the registry source can
+# reuse the `tracking:` section. Environment variables override the most common values (see src/en_gu/serving.py):
+#   EN_GU_MODEL_SOURCE, EN_GU_MODEL_PATH, EN_GU_SPM_PATH, EN_GU_MODEL_ALIAS, EN_GU_FEEDBACK_DB, EN_GU_DEVICE
+
+serve:
+  model:
+    source: path               # path = a checkpoint file (mounted or baked into the image)
+                               # registry = the version holding `alias` in the MLflow registry (needs mlflow)
+                               # hub = download best.pt from the Hugging Face repo below
+    path: best.pt
+    spm_path: null             # only for weights-only checkpoints from old runs
+    alias: champion
+    hub_repo: ansh164/english-gujarati-transformer
+    hub_filename: best.pt
+  device: cpu                  # cpu | cuda | auto
+  threads: null                # torch intra-op threads; null = torch default (all cores)
+  limits:
+    max_chars: 2000            # same limit as the Streamlit text box
+    max_sentences: 40          # after sentence splitting
+    min_beam: 1
+    max_beam: 8
+    default_beam: 5
+    max_correction_chars: 4000
+  feedback_db: data/feedback/feedback.db   # SQLite file for /feedback (created on first use)

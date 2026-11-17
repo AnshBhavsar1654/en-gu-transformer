@@ -109,3 +109,24 @@ def tracking_cfg(tiny_cfg, tmp_path):
         "registered_model": "test-model",
     }
     return type(tiny_cfg)(deep_merge(tiny_cfg, {"tracking": tracking}))
+
+
+@pytest.fixture
+def app_checkpoint(tmp_path, tiny_model, spm_path):
+    """A self-contained best.pt (tiny random model + synthetic tokenizer), as the API would serve it."""
+    from en_gu.checkpoint import save_for_app
+    from en_gu.tokenizer import load_tokenizer
+
+    path = tmp_path / "serve" / "best.pt"
+    state = {k: v.half() for k, v in tiny_model.state_dict().items() if k != "output_proj.weight"}
+    save_for_app(path, {"vocab_size": 400, **TINY_MODEL}, state, load_tokenizer(spm_path), {"test_bleu": 1.5})
+    return path
+
+
+@pytest.fixture
+def serve_cfg(tiny_cfg, tmp_path, app_checkpoint):
+    """tiny_cfg plus the serve section from configs/serve.yaml, pointed at the tiny checkpoint."""
+    serve = load_config([CONFIG_DIR / "serve.yaml"])["serve"]
+    serve["model"]["path"] = str(app_checkpoint)
+    serve["feedback_db"] = str(tmp_path / "feedback.db")
+    return type(tiny_cfg)(deep_merge(tiny_cfg, {"serve": serve}))
