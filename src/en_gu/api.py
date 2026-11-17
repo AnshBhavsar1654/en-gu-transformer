@@ -5,6 +5,7 @@
     GET  /ready       the model is loaded and requests can be served (readiness)
     POST /feedback    {request_id, rating: up|down, corrected_translation?, ...} -> stored for the improvement loop
     GET  /info        model details and request limits
+    GET  /metrics     Prometheus metrics
 
 Run it with `python -m en_gu serve` or `uvicorn --factory en_gu.api:create_app`. The model loads in a background
 thread at startup, so /health answers immediately and /ready turns true once the model is in memory. Every response
@@ -15,17 +16,19 @@ import logging
 import os
 import re
 import threading
+import time
 import uuid
 from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from en_gu import __version__
 from en_gu.config import load_config
 from en_gu.feedback import FeedbackStore
+from en_gu.metrics import ServiceMetrics
 from en_gu.serving import SERVE_CONFIGS, Translator, serve_settings
 from en_gu.textutils import split_sentences
 
@@ -67,14 +70,19 @@ class FeedbackResponse(BaseModel):
 class ServiceState:
     """What the endpoints share: the translator once loaded, or the reason it failed to load."""
 
-    def __init__(self):
+    def __init__(self, metrics):
         self.translator = None
         self.error = None
         self.loaded = threading.Event()
+        self.metrics = metrics
+
+    def set_translator(self, translator):
+        self.translator = translator
+        self.metrics.model_loaded(translator)
 
     def load(self, cfg, settings):
         try:
-            self.translator = Translator.load(cfg, settings)
+            self.set_translator(Translator.load(cfg, settings))
         except Exception as exc:  # stay up and report not-ready instead of crash-looping
             log.exception("Model failed to load")
             self.error = f"{type(exc).__name__}: {exc}"
@@ -88,6 +96,12 @@ class ServiceState:
         return self.translator
 
 
+def _route(request):
+    """The route template (e.g. /translate), or 'unmatched' for 404s, so random URLs don't create new series."""
+    route = request.scope.get("route")
+    return getattr(route, "path", "unmatched")
+
+
 def default_config():
     paths = os.environ.get("EN_GU_CONFIG")
     return load_config(paths.split(",") if paths else SERVE_CONFIGS)
@@ -98,13 +112,14 @@ def create_app(cfg=None, translator=None, background=True):
     cfg = cfg or default_config()
     settings = serve_settings(cfg)
     limits = settings["limits"]
-    state = ServiceState()
+    metrics = ServiceMetrics()
+    state = ServiceState(metrics)
     feedback_store = FeedbackStore(settings["feedback_db"], settings.get("feedback_retention_days"))
 
     @asynccontextmanager
     async def lifespan(app):
         if translator is not None:
-            state.translator = translator
+            state.set_translator(translator)
             state.loaded.set()
         elif background:
             threading.Thread(target=state.load, args=(cfg, settings), name="model-loader", daemon=True).start()
@@ -122,16 +137,29 @@ def create_app(cfg=None, translator=None, background=True):
     app.state.cfg = cfg
     app.state.settings = settings
     app.state.feedback = feedback_store
+    app.state.metrics = metrics
 
     @app.middleware("http")
-    async def add_ids(request: Request, call_next):
+    async def add_ids_and_measure(request: Request, call_next):
         incoming = request.headers.get("X-Request-ID", "")
         request.state.request_id = incoming if REQUEST_ID.match(incoming) else uuid.uuid4().hex
-        response = await call_next(request)
+        start = time.perf_counter()
+        metrics.in_progress.inc()
+        status = 500  # stays 500 if the endpoint raises
+        try:
+            response = await call_next(request)
+            status = response.status_code
+        finally:
+            metrics.in_progress.dec()
+            metrics.observe_request(request.method, _route(request), status, time.perf_counter() - start)
         response.headers["X-Request-ID"] = request.state.request_id
         if state.translator is not None:
             response.headers["X-Model-Version"] = state.translator.version
         return response
+
+    @app.get("/metrics", include_in_schema=False)
+    def prometheus_metrics():
+        return Response(metrics.render(), media_type=metrics.content_type)
 
     @app.get("/health")
     def health():
@@ -164,6 +192,7 @@ def create_app(cfg=None, translator=None, background=True):
 
         translator = state.require_translator()
         result = translator.translate_text(text, beam_size=beam)
+        metrics.observe_translation(beam, result.latency_ms / 1000, result.n_sentences, len(text))
         return TranslateResponse(
             request_id=request.state.request_id,
             translation=result.translation,
@@ -184,6 +213,7 @@ def create_app(cfg=None, translator=None, background=True):
         source, translation = (body.source_text, body.translation) if corrected else (None, None)
         version = body.model_version or (state.translator.version if state.translator else None)
         feedback_id = feedback_store.add(body.request_id, body.rating, version, source, translation, corrected)
+        metrics.feedback.labels(body.rating, str(corrected is not None).lower()).inc()
         return FeedbackResponse(feedback_id=feedback_id, stored_text=corrected is not None)
 
     return app

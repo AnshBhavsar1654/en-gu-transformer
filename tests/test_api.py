@@ -152,3 +152,21 @@ def test_old_feedback_is_deleted_after_the_retention_period(tmp_path):
         conn.execute("UPDATE feedback SET created_at = '2000-01-01T00:00:00+00:00'")
     store.add("new", "down")
     assert [r["request_id"] for r in store.rows()] == ["new"]
+
+
+def test_metrics_count_requests_translations_and_feedback(client, translator):
+    client.post("/translate", json={"text": "The train is late. A big house.", "beam_size": 2})
+    client.post("/translate", json={"text": ""})
+    client.post("/feedback", json={"request_id": "r1", "rating": "down", "corrected_translation": "x"})
+    client.get("/no-such-page")
+    r = client.get("/metrics")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/plain")
+    text = r.text
+    assert 'en_gu_http_requests_total{method="POST",path="/translate",status="200"} 1.0' in text
+    assert 'en_gu_http_requests_total{method="POST",path="/translate",status="422"} 1.0' in text
+    assert 'path="unmatched",status="404"' in text and "/no-such-page" not in text
+    assert 'en_gu_translate_seconds_count{beam_size="2"} 1.0' in text
+    assert "en_gu_translate_sentences_sum 2.0" in text
+    assert 'en_gu_feedback_total{rating="down",with_correction="true"} 1.0' in text
+    assert f'en_gu_model_info{{device="cpu",source="path",version="{translator.version}"}} 1.0' in text
+    assert "en_gu_model_ready 1.0" in text
