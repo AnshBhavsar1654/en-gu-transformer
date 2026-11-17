@@ -16,10 +16,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-serve = ["streamlit>=1.40.0", "huggingface_hub>=0.20.0"]
+api = ["fastapi>=0.110", "uvicorn[standard]>=0.29", "huggingface_hub>=0.20.0"]
+ui = ["streamlit>=1.40.0", "httpx>=0.27", "huggingface_hub>=0.20.0"]
+serve = ["en-gu[api,ui]"]
 train = ["sacrebleu>=2.4.0", "tqdm>=4.66.0", "matplotlib>=3.7.0"]
 tracking = ["mlflow>=2.16"]
-dev = ["mlflow>=2.16", "pytest>=8.0", "ruff>=0.6.0", "pre-commit>=3.7"]
+dev = ["mlflow>=2.16", "pytest>=8.0", "ruff>=0.6.0", "pre-commit>=3.7", "fastapi>=0.110", "httpx>=0.27"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

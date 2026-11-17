@@ -1,11 +1,12 @@
 """`python -m en_gu <stage>`: run one pipeline stage, or all of them.
 
 Stages: prepare -> tokenizer -> train -> evaluate -> export. `score` evaluates any exported checkpoint;
-`promote`, `backfill-run1` and `registry` manage the model registry; `fetch-model` copies a registry version out
-for serving.
+`promote`, `backfill-run1` and `registry` manage the model registry; `serve` runs the inference API and
+`fetch-model` copies a registry version out for serving.
 """
 
 import argparse
+import os
 import sys
 
 from en_gu.config import load_config
@@ -87,12 +88,25 @@ def build_parser():
     )
     fetch.add_argument("--out", default="models/best.pt")
     fetch.add_argument("--alias", default="champion")
+
+    serve = sub.add_parser(
+        "serve", parents=[common], help="run the inference API (default config: base.yaml + serve.yaml)"
+    )
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
+    serve.add_argument("--log-level", default="info")
     return parser
 
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
-    cfg = load_config(args.config or ["configs/base.yaml"], args.set)
+    if args.command in ("serve", "fetch-model"):
+        from en_gu.serving import SERVE_CONFIGS
+
+        default_configs = SERVE_CONFIGS
+    else:
+        default_configs = ["configs/base.yaml"]
+    cfg = load_config(args.config or default_configs, args.set)
     if args.command == "score":
         from en_gu.evaluate import score_checkpoint
 
@@ -122,6 +136,15 @@ def main(argv=None):
         from en_gu.serving import fetch_model
 
         fetch_model(cfg, args.out, args.alias)
+    elif args.command == "serve":
+        import logging
+
+        import uvicorn
+
+        from en_gu.api import create_app
+
+        logging.basicConfig(level=args.log_level.upper(), format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+        uvicorn.run(create_app(cfg), host=args.host, port=args.port, log_level=args.log_level)
     else:
         for name in STAGES if args.command == "all" else (args.command,):
             print(f"\n=== {name} ===")
