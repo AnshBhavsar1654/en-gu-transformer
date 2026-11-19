@@ -1,7 +1,8 @@
 # English → Gujarati Neural Machine Translation
 
 A Transformer encoder-decoder trained **from scratch** in PyTorch to translate English into Gujarati, served by a
-FastAPI inference service in Docker with a Streamlit front end. Training runs on Kaggle (2×T4); inference runs on CPU.
+FastAPI inference service in Docker with a Streamlit front end, tested and shipped by GitHub Actions CI/CD. Training
+runs on Kaggle (2×T4); inference runs on CPU.
 
 ## Results (run 1)
 
@@ -221,14 +222,65 @@ what the gate's isolation check reads.
 ### Tests and linting
 
 ```bash
-python -m pytest        # 106 tests, ~1.5 min on CPU, no data or model download needed
-python -m ruff check .
+python -m pytest                 # 112 tests, a few minutes on CPU, no data or model download needed
+python -m pytest -m "not smoke"  # skip the model smoke tests (they start the real API process)
+python -m ruff check . && python -m ruff format --check src tests     # what CI's Lint job runs
 ```
 
 The tests cover config handling, corpus cleaning, the leak-free split and frozen eval set, batching, the model and
 decoding, checkpoint loading, experiment tracking, the registry, the promotion gate, the full pipeline on a small
-synthetic corpus, and the inference API (validation, readiness, feedback, metrics) on a tiny random model. `pre-commit install` enables the
-same checks (plus a guard against committing large files such as checkpoints) before each commit.
+synthetic corpus, and the inference API (validation, readiness, feedback, metrics) on a tiny random model. The
+**model smoke tests** (`-m smoke`) start `python -m en_gu serve` as a separate process on a tiny random checkpoint and
+check it over HTTP, exactly as CI does. `pre-commit install` enables the same checks (plus a guard against committing
+large files such as checkpoints) before each commit.
+
+## CI/CD (GitHub Actions)
+
+```
+pull request ──▶ ci.yml:  Lint ─▶ Tests and model smoke test ─▶ Docker build and container smoke test
+                          (all three are required checks; main accepts changes only through pull requests)
+
+merge to main ─▶ cd.yml:  CI again ─▶ build + push images (tag = git SHA) ─▶ staging ─▶ smoke test
+                                                                     ─▶ manual approval ─▶ production ─▶ smoke test
+                                                                        (failed smoke test = traffic rolled back)
+```
+
+| Workflow | What it does |
+|---|---|
+| `.github/workflows/ci.yml` | On every pull request: `ruff check` and `ruff format --check`; the unit tests; the model smoke tests; then builds the `api` and `ui` images, has the `api` image generate a tiny model, starts the container and runs the HTTP smoke test against it (including that `/info` reports the commit being tested). Image sizes go to the job summary. |
+| `.github/workflows/cd.yml` | On every merge to `main`: re-runs CI on the merged commit, pushes `ghcr.io/anshbhavsar1654/en-gu-api` and `en-gu-ui` tagged with the git SHA (and `main`), copies the API image to Artifact Registry, then deploys to staging and, after approval, to production. |
+| `.github/workflows/deploy.yml` | Reusable deploy of one image to one Cloud Run service: remembers the revision currently serving, deploys, runs the smoke test against the public URL, and shifts traffic back to the remembered revision if the test fails. |
+
+CI never needs the 122 MB model or the corpus: `python -m en_gu make-tiny-model` builds a tiny random checkpoint in the
+real format in a few seconds, so the loader, tokenizer, beam search and API are all exercised. The translations are
+meaningless; the real model's quality is checked by the promotion gate, not by CI.
+
+**Smoke test.** `en_gu/smoke.py` uses only the standard library, so it runs anywhere:
+
+```bash
+python -m en_gu smoke-test --url http://127.0.0.1:8000                    # any running API
+PYTHONPATH=src python -m en_gu.smoke --url https://… --expect-build <git sha> --no-feedback
+```
+
+It checks `/health`, waits for `/ready`, compares `/info`'s `build` with the expected commit (the image gets it from
+`--build-arg GIT_SHA`), sends a two-sentence translation and checks the request id and version headers, checks that
+bad input gets 422, stores a thumbs-up (skipped with `--no-feedback`, as in production) and reads `/metrics`. It prints
+one line per check and exits 1 if any check fails.
+
+**One-time setup** (both scripts are idempotent):
+
+1. `bash scripts/setup_github.sh`: branch protection on `main` (pull requests only, the three CI checks required, no
+   force pushes, admins included) and the `staging` and `production` environments, with you as the required reviewer
+   for production. Run it after CI has run once, so GitHub knows the check names.
+2. `PROJECT_ID=<gcp-project> bash scripts/setup_gcp_cicd.sh`: Artifact Registry repository, a deployer service
+   account with only `run.admin` and `artifactregistry.writer`, and Workload Identity Federation that trusts only this
+   repository, so **no cloud key is stored in GitHub**. It sets the repository variables `GCP_PROJECT_ID`,
+   `GCP_REGION`, `GCP_AR_REPO`, `GCP_WIF_PROVIDER` and `GCP_DEPLOY_SA`.
+
+Until the GCP variables exist, CD stops after publishing the images to GHCR and says so in the run summary. Optional
+variables: `STAGING_SERVICE` / `PRODUCTION_SERVICE` (default `en-gu-api-staging` / `en-gu-api`) and
+`EN_GU_MODEL_SOURCE` (default `hub`: the service downloads `best.pt` from Hugging Face at startup). Cloud Run sizing,
+canary traffic splits and the cold-start comparison with the `api-baked` image are Phase 4.
 
 ## Publish the model to Hugging Face (optional)
 
@@ -245,10 +297,13 @@ app.py                   Streamlit front end (client of the API, or STANDALONE=1
 src/en_gu/               Package: model.py (Transformer, decoding, loader), data.py, tokenizer.py,
                          train.py, evaluate.py, export.py, config.py, cli.py,
                          tracking.py, registry.py, gate.py, promote.py, backfill.py,
-                         api.py, serving.py, feedback.py, metrics.py, textutils.py
+                         api.py, serving.py, feedback.py, metrics.py, textutils.py,
+                         smoke.py (HTTP smoke test), tinymodel.py (tiny random model for tests and CI)
 configs/                 base.yaml (run 1 hyperparameters), smoke.yaml (tiny CPU run), serve.yaml (API)
 Dockerfile               Targets: api, api-baked, ui
 docker-compose.yml       Local stack: API + UI
+.github/workflows/       ci.yml (pull requests), cd.yml (main -> staging -> production), deploy.yml (reusable)
+scripts/                 One-time setup: setup_github.sh (branch protection, environments), setup_gcp_cicd.sh
 tests/                   pytest suite
 notebooks/kaggle_runner.ipynb    Thin notebook that runs the pipeline on Kaggle
 notebooks/archive/       Run 1 notebook with its training log
