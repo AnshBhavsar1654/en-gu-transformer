@@ -1,0 +1,147 @@
+# CD: every merge to main
+#   CI again on the merged commit -> build and push images tagged with the git SHA -> deploy to staging
+#   -> smoke test staging -> manual approval -> deploy to production -> smoke test production
+#
+# Images always go to GitHub Container Registry. The Cloud Run steps run only once the GCP repository variables
+# are set (scripts/setup_gcp_cicd.sh prints them); until then the pipeline stops after publishing the images.
+# The manual approval is a required reviewer on the `production` environment (scripts/setup_github.sh).
+
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false   # never cancel a deploy halfway; queued runs wait their turn
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Build and push images
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      api-image: ${{ steps.names.outputs.api }}
+      gcp-image: ${{ steps.names.outputs.gcp }}
+      deploy: ${{ steps.names.outputs.deploy }}
+    env:
+      REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image names
+        id: names
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"   # registry paths must be lowercase
+          {
+            echo "api=ghcr.io/${owner}/en-gu-api:${GITHUB_SHA}"
+            echo "ui=ghcr.io/${owner}/en-gu-ui:${GITHUB_SHA}"
+            echo "api_latest=ghcr.io/${owner}/en-gu-api:main"
+            echo "ui_latest=ghcr.io/${owner}/en-gu-ui:main"
+            if [ -n "${{ vars.GCP_PROJECT_ID }}" ]; then
+              repo="${{ vars.GCP_AR_REPO || 'en-gu' }}"
+              echo "gcp=${REGION}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${repo}/en-gu-api:${GITHUB_SHA}"
+              echo "deploy=true"
+            else
+              echo "deploy=false"
+            fi
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: api
+          push: true
+          tags: |
+            ${{ steps.names.outputs.api }}
+            ${{ steps.names.outputs.api_latest }}
+          build-args: GIT_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Build and push ui
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: ui
+          push: true
+          tags: |
+            ${{ steps.names.outputs.ui }}
+            ${{ steps.names.outputs.ui_latest }}
+          cache-from: type=gha,scope=ui
+          cache-to: type=gha,scope=ui,mode=max
+
+      # Cloud Run pulls from Artifact Registry, so copy the api image there (no rebuild: same digest)
+      - uses: google-github-actions/auth@v2
+        if: steps.names.outputs.deploy == 'true'
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.names.outputs.deploy == 'true'
+      - name: Copy the api image to Artifact Registry
+        if: steps.names.outputs.deploy == 'true'
+        run: |
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker buildx imagetools create --tag "${{ steps.names.outputs.gcp }}" "${{ steps.names.outputs.api }}"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published"
+            echo "- \`${{ steps.names.outputs.api }}\`"
+            echo "- \`${{ steps.names.outputs.ui }}\`"
+            if [ "${{ steps.names.outputs.deploy }}" = "true" ]; then
+              echo "- \`${{ steps.names.outputs.gcp }}\`"
+            else
+              echo ""
+              echo "Staging and production deploys are skipped: set the GCP_* repository variables"
+              echo "(run scripts/setup_gcp_cicd.sh) to enable them."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  staging:
+    name: Staging
+    needs: publish
+    if: needs.publish.outputs.deploy == 'true'
+    uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      environment: staging
+      service: ${{ vars.STAGING_SERVICE || 'en-gu-api-staging' }}
+      image: ${{ needs.publish.outputs.gcp-image }}
+      smoke-feedback: true
+
+  production:
+    name: Production
+    needs: [publish, staging]
+    uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      environment: production   # required reviewer on this environment = the manual approval
+      service: ${{ vars.PRODUCTION_SERVICE || 'en-gu-api' }}
+      image: ${{ needs.publish.outputs.gcp-image }}
+      smoke-feedback: false

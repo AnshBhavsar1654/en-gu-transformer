@@ -1,0 +1,105 @@
+# Reusable: deploy one image to one Cloud Run service, smoke test it, and roll traffic back if the test fails.
+# Called by cd.yml for staging and production. Authentication uses Workload Identity Federation, so no
+# long-lived service-account key is stored in GitHub (see scripts/setup_gcp_cicd.sh).
+
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub environment (staging | production); production waits for a manual approval
+        type: string
+        required: true
+      service:
+        description: Cloud Run service name
+        type: string
+        required: true
+      image:
+        description: Full image reference in Artifact Registry, tagged with the git SHA
+        type: string
+        required: true
+      smoke-feedback:
+        description: Let the smoke test write a feedback row (off for production)
+        type: boolean
+        default: true
+    outputs:
+      url:
+        description: Service URL
+        value: ${{ jobs.deploy.outputs.url }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+      SERVICE: ${{ inputs.service }}
+      IMAGE: ${{ inputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Remember the revision currently serving traffic
+        id: before
+        run: |
+          prev=$(gcloud run services describe "$SERVICE" --region "$REGION" \
+                   --format='value(status.latestReadyRevisionName)' 2>/dev/null || true)
+          echo "revision=$prev" >> "$GITHUB_OUTPUT"
+          echo "Serving before deploy: ${prev:-none (first deploy)}"
+
+      - name: Deploy ${{ inputs.image }}
+        id: deploy
+        # Model comes from the Hugging Face repo at startup (EN_GU_MODEL_SOURCE=hub); Phase 4 compares this with
+        # the api-baked image. One translation at a time per instance (see the README), so low concurrency.
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --image "$IMAGE" \
+            --region "$REGION" \
+            --port 8000 \
+            --cpu 1 --memory 2Gi --cpu-boost \
+            --concurrency 4 --timeout 60 \
+            --min-instances 0 --max-instances 2 \
+            --set-env-vars "EN_GU_MODEL_SOURCE=${{ vars.EN_GU_MODEL_SOURCE || 'hub' }}" \
+            --labels "commit-sha=${GITHUB_SHA},environment=${{ inputs.environment }}" \
+            --allow-unauthenticated \
+            --quiet
+          url=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test ${{ inputs.environment }}
+        run: |
+          PYTHONPATH=src python3 -m en_gu.smoke --url "${{ steps.deploy.outputs.url }}" --timeout 300 \
+            --expect-build "$GITHUB_SHA" ${{ !inputs.smoke-feedback && '--no-feedback' || '' }}
+
+      - name: Roll back to the previous revision
+        if: failure() && steps.before.outputs.revision != ''
+        run: |
+          gcloud run services update-traffic "$SERVICE" --region "$REGION" \
+            --to-revisions "${{ steps.before.outputs.revision }}=100" --quiet
+          echo "::error::Smoke test failed on ${{ inputs.environment }}; traffic is back on ${{ steps.before.outputs.revision }}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### ${{ inputs.environment }}: ${{ job.status }}"
+            echo "- Service: \`$SERVICE\` ($REGION) – ${{ steps.deploy.outputs.url }}"
+            echo "- Image: \`$IMAGE\`"
+            echo "- Previous revision: \`${{ steps.before.outputs.revision || 'none' }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
