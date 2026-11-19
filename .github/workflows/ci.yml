@@ -1,0 +1,108 @@
+# CI: every pull request (and every push to main, through cd.yml) must pass
+#   lint -> unit tests -> model smoke test -> docker build + container smoke test
+# No step downloads the 122 MB model or the corpus: the tests and smoke tests use a tiny random model that is
+# generated on the fly (python -m en_gu make-tiny-model).
+
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:          # cd.yml runs the same checks on main before it publishes anything
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  TORCH_VERSION: "2.12.1"   # keep in step with the Dockerfile
+  RUFF_VERSION: "0.15.8"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install "ruff==${RUFF_VERSION}"
+      - name: ruff check
+        run: ruff check --output-format=github .
+      - name: ruff format
+        run: ruff format --check src tests
+
+  test:
+    name: Tests and model smoke test
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install CPU torch and the package
+        run: |
+          pip install "torch==${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[api,train,dev]"
+      - name: Unit tests
+        run: python -m pytest -m "not smoke" --durations=10
+      - name: Model smoke test (real API process, tiny random model)
+        run: python -m pytest -m smoke -v
+
+  docker:
+    name: Docker build and container smoke test
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build api image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: api
+          tags: en-gu-api:ci
+          load: true
+          build-args: GIT_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Build ui image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: ui
+          tags: en-gu-ui:ci
+          load: true
+          cache-from: type=gha,scope=ui
+          cache-to: type=gha,scope=ui,mode=max
+      - name: Generate a tiny model with the image itself
+        run: |
+          mkdir -p models
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD/models:/models" \
+            en-gu-api:ci python -m en_gu make-tiny-model --out /models/best.pt
+      - name: Start the api container
+        run: docker run -d --name api -p 8000:8000 -v "$PWD/models:/models:ro" en-gu-api:ci
+      - name: Container smoke test
+        run: PYTHONPATH=src python -m en_gu.smoke --url http://127.0.0.1:8000 --timeout 120 --expect-build "${{ github.sha }}"
+      - name: Image sizes
+        if: always()
+        run: |
+          {
+            echo "| Image | Size |"
+            echo "|---|---|"
+            docker image ls --format '| {{.Repository}}:{{.Tag}} | {{.Size}} |' | grep ':ci '
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Container logs
+        if: failure()
+        run: docker logs api || true

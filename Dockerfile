@@ -6,7 +6,7 @@
 #   ui         Streamlit front end, a thin client of the API (no torch)
 #
 #   python -m en_gu fetch-model                     # writes models/best.pt (+ version sidecar) from the registry
-#   docker build --target api -t en-gu-api .
+#   docker build --target api --build-arg GIT_SHA=$(git rev-parse HEAD) -t en-gu-api .
 #   docker run -p 8000:8000 -v "$PWD/models:/models:ro" en-gu-api
 
 ARG PYTHON_VERSION=3.12
@@ -45,6 +45,12 @@ EXPOSE 8000
 # Liveness only; readiness (model loaded) is GET /ready
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ[\"PORT\"]}/health', timeout=4)"
+# The git commit, set by CI (--build-arg GIT_SHA=...); GET /info reports it so a deploy can be verified.
+# Declared last so a new commit doesn't invalidate the cached layers above.
+ARG GIT_SHA=
+LABEL org.opencontainers.image.source="https://github.com/AnshBhavsar1654/en-gu-transformer" \
+      org.opencontainers.image.revision="${GIT_SHA}"
+ENV EN_GU_BUILD_SHA=${GIT_SHA}
 CMD ["python", "-m", "en_gu", "serve", "--host", "0.0.0.0"]
 
 # ---------------------------------------------------------------------------- api-baked: model inside the image

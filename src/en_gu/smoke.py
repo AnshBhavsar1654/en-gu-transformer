@@ -5,7 +5,8 @@ Uses only the standard library, so it runs on a bare CI runner without torch:
     python src/en_gu/smoke.py --url https://staging.example.run.app --expect-build "$GITHUB_SHA"
     python -m en_gu smoke-test --url http://127.0.0.1:8000
 
-Checks, in order: /health answers; /ready turns true within --timeout; /info reports the expected build;
+Checks, in order: /health answers (retried until the process is up); /ready turns true within --timeout;
+/info reports the expected build;
 /translate returns a translation with matching version headers; invalid input is rejected with 422;
 /feedback stores a rating (skipped with --no-feedback, e.g. against production); /metrics counts the requests.
 Exits 0 when every check passes and 1 otherwise, printing one line per check.
@@ -47,6 +48,18 @@ def check(condition, message):
         raise SmokeFailure(message)
 
 
+def wait_until_up(base_url, timeout, interval=1.0):
+    """Poll /health until the process answers (a new container or Cloud Run instance takes a moment)."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            return request(base_url, "GET", "/health", timeout=10)
+        except (urllib.error.URLError, OSError):
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(interval)
+
+
 def wait_until_ready(base_url, timeout, interval=2.0):
     """Poll /health then /ready until both answer 200; return the /ready body."""
     deadline = time.monotonic() + timeout
@@ -81,7 +94,7 @@ def run_smoke(base_url, timeout=180, expect_version=None, expect_build=None, fee
             out(f"FAIL  {name:<24} {type(exc).__name__}: {exc}")
 
     def health():
-        status, _, body = request(base_url, "GET", "/health")
+        status, _, body = wait_until_up(base_url, timeout)
         check(status == 200 and json.loads(body) == {"status": "ok"}, f"/health -> {status} {body[:200]}")
 
     def ready():
@@ -114,7 +127,7 @@ def run_smoke(base_url, timeout=180, expect_version=None, expect_build=None, fee
         if context.get("version"):
             check(data["model_version"] == context["version"], "model version changed since /ready")
         context["request_id"] = rid
-        return f"{data['latency_ms']} ms, {data['translation'][:40]!r}"
+        return f"{data['latency_ms']} ms, {ascii(data['translation'][:30])}"  # ascii: safe on any console
 
     def rejects_bad_input():
         for payload in ({"text": "   "}, {"text": "Hi.", "beam_size": 99}, {"txt": "Hi."}):
