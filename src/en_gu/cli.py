@@ -2,7 +2,7 @@
 
 Stages: prepare -> tokenizer -> train -> evaluate -> export. `score` evaluates any exported checkpoint;
 `promote`, `backfill-run1` and `registry` manage the model registry; `serve` runs the inference API and
-`fetch-model` copies a registry version out for serving.
+`fetch-model` copies a registry version out for serving. `make-tiny-model` and `smoke-test` are for CI.
 """
 
 import argparse
@@ -95,11 +95,30 @@ def build_parser():
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
     serve.add_argument("--log-level", default="info")
+
+    tiny = sub.add_parser("make-tiny-model", help="write a tiny random checkpoint for smoke tests (CI)")
+    tiny.add_argument("--out", default="models/best.pt")
+    tiny.add_argument("--seed", type=int, default=0)
+
+    from en_gu.smoke import build_parser as smoke_parser
+
+    smoke_parser(sub.add_parser("smoke-test", help="run HTTP smoke checks against a running API"))
     return parser
 
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
+    # The CI helpers need no config (smoke-test runs against remote URLs, from any directory)
+    if args.command == "make-tiny-model":
+        from en_gu.tinymodel import make_tiny_checkpoint
+
+        make_tiny_checkpoint(args.out, args.seed)
+        return 0
+    if args.command == "smoke-test":
+        from en_gu.smoke import run_smoke
+
+        failed = run_smoke(args.url, args.timeout, args.expect_version, args.expect_build, not args.no_feedback)
+        return 1 if failed else 0
     if args.command in ("serve", "fetch-model"):
         from en_gu.serving import SERVE_CONFIGS
 

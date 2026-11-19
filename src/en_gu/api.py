@@ -4,7 +4,7 @@
     GET  /health      the process is up (liveness)
     GET  /ready       the model is loaded and requests can be served (readiness)
     POST /feedback    {request_id, rating: up|down, corrected_translation?, ...} -> stored for the improvement loop
-    GET  /info        model details and request limits
+    GET  /info        model details, request limits and the build (git commit) of the running image
     GET  /metrics     Prometheus metrics
 
 Run it with `python -m en_gu serve` or `uvicorn --factory en_gu.api:create_app`. The model loads in a background
@@ -115,6 +115,7 @@ def create_app(cfg=None, translator=None, background=True):
     metrics = ServiceMetrics()
     state = ServiceState(metrics)
     feedback_store = FeedbackStore(settings["feedback_db"], settings.get("feedback_retention_days"))
+    build = os.environ.get("EN_GU_BUILD_SHA") or None  # git commit baked into the image by CI
 
     @asynccontextmanager
     async def lifespan(app):
@@ -174,7 +175,7 @@ def create_app(cfg=None, translator=None, background=True):
 
     @app.get("/info")
     def info():
-        return {**state.require_translator().info(), "limits": limits, "api_version": __version__}
+        return {**state.require_translator().info(), "limits": limits, "api_version": __version__, "build": build}
 
     @app.post("/translate", response_model=TranslateResponse)
     def translate(body: TranslateRequest, request: Request):

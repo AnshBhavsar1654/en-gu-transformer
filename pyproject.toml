@@ -29,7 +29,10 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-markers = ["slow: end-to-end pipeline tests (a few seconds on CPU)"]
+markers = [
+    "slow: end-to-end pipeline tests (a few seconds on CPU)",
+    "smoke: model smoke tests that start the real API process on a tiny random model",
+]
 
 [tool.ruff]
 line-length = 120

@@ -1,37 +1,13 @@
 """Shared fixtures: a synthetic parallel corpus, so tests never need the real data or the 122 MB model."""
 
-import random
 from pathlib import Path
 
 import pytest
-import sentencepiece as spm
 
 from en_gu.config import deep_merge, load_config
-from en_gu.model import BOS_IDX, EOS_IDX, PAD_IDX, UNK_IDX, Transformer
+from en_gu.tinymodel import TINY_MODEL, make_pairs, save_tiny_checkpoint, tiny_transformer, train_tiny_tokenizer
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "configs"
-WORDS = (
-    "the a train bus water house river market school doctor teacher farmer morning evening quick slow "
-    "green red blue big small old new city village road bridge garden window door table chair book pen "
-    "bread milk rice fruit tree bird fish horse dog cat friend mother father brother sister child "
-    "people music story letter answer question"
-).split()
-TINY_MODEL = dict(d_model=32, num_heads=2, num_encoder_layers=1, num_decoder_layers=1, d_ff=64, dropout=0.0, max_len=64)
-
-
-def gujarati_word(i):
-    """A fake but valid-looking Gujarati word per English word (consonant + vowel sign + consonant)."""
-    return chr(0x0A95 + i % 30) + chr(0x0ABE) + chr(0x0A95 + (i * 7 + 3) % 30)
-
-
-def make_pairs(n, seed=0):
-    rng = random.Random(seed)
-    en, gu = [], []
-    for _ in range(n):
-        idx = [rng.randrange(len(WORDS)) for _ in range(rng.randint(4, 9))]
-        en.append(" ".join(WORDS[i] for i in idx).capitalize() + ".")
-        gu.append(" ".join(gujarati_word(i) for i in idx))
-    return en, gu
 
 
 @pytest.fixture
@@ -73,29 +49,12 @@ def tiny_cfg(tmp_path, corpus_dir):
 @pytest.fixture
 def spm_path(tmp_path):
     """A small SentencePiece model trained on the synthetic corpus (vocab 400, byte fallback)."""
-    en, gu = make_pairs(2000, seed=1)
-    prefix = tmp_path / "tok"
-    spm.SentencePieceTrainer.train(
-        sentence_iterator=iter(en + gu),
-        model_prefix=str(prefix),
-        vocab_size=400,
-        model_type="unigram",
-        byte_fallback=True,
-        pad_id=PAD_IDX,
-        unk_id=UNK_IDX,
-        bos_id=BOS_IDX,
-        eos_id=EOS_IDX,
-        minloglevel=2,
-    )
-    return prefix.with_suffix(".model")
+    return train_tiny_tokenizer(tmp_path / "tok")
 
 
 @pytest.fixture
 def tiny_model():
-    import torch
-
-    torch.manual_seed(0)
-    return Transformer(vocab_size=400, **TINY_MODEL).eval()
+    return tiny_transformer()
 
 
 @pytest.fixture
@@ -114,13 +73,7 @@ def tracking_cfg(tiny_cfg, tmp_path):
 @pytest.fixture
 def app_checkpoint(tmp_path, tiny_model, spm_path):
     """A self-contained best.pt (tiny random model + synthetic tokenizer), as the API would serve it."""
-    from en_gu.checkpoint import save_for_app
-    from en_gu.tokenizer import load_tokenizer
-
-    path = tmp_path / "serve" / "best.pt"
-    state = {k: v.half() for k, v in tiny_model.state_dict().items() if k != "output_proj.weight"}
-    save_for_app(path, {"vocab_size": 400, **TINY_MODEL}, state, load_tokenizer(spm_path), {"test_bleu": 1.5})
-    return path
+    return save_tiny_checkpoint(tmp_path / "serve" / "best.pt", tiny_model, spm_path)
 
 
 @pytest.fixture
