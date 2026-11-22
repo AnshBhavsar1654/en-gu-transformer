@@ -61,6 +61,14 @@ def test_health_ready_and_info(client, translator):
     assert client.get("/ready").json() == {"ready": True, "model_version": translator.version}
     info = client.get("/info").json()
     assert info["limits"]["max_chars"] == 2000 and info["parameters"] > 0
+    assert len(info["instance"]) == 12 and info["uptime_seconds"] >= 0
+    assert client.get("/info").json()["instance"] == info["instance"]  # same process, same id
+
+
+def test_info_reports_the_cloud_run_revision(serve_cfg, translator, monkeypatch):
+    monkeypatch.setenv("K_REVISION", "en-gu-api-abc1234-1")
+    with TestClient(create_app(serve_cfg, translator=translator)) as c:
+        assert c.get("/info").json()["revision"] == "en-gu-api-abc1234-1"
 
 
 def test_not_ready_until_the_model_has_loaded(serve_cfg, monkeypatch):
