@@ -1,6 +1,7 @@
 PY ?= python
 
-.PHONY: install lint format test smoke smoke-test tiny-model prepare tokenizer train evaluate export pipeline fetch-model serve ui up down
+.PHONY: install lint format test smoke smoke-test tiny-model prepare tokenizer train evaluate export pipeline fetch-model serve ui up down \
+	cold-start rollback upload-model-gcs
 
 install:
 	$(PY) -m pip install -e ".[serve,train,dev]"
@@ -49,3 +50,17 @@ up:
 
 down:
 	docker compose down
+
+# Cloud Run (Phase 4; see RUNBOOKS.md). SERVICE=en-gu-api | en-gu-api-staging, URL=https://<service URL>
+SERVICE ?= en-gu-api-staging
+BUCKET ?=
+cold-start:
+	$(PY) -m en_gu cold-start --url $(URL)
+
+rollback:
+	SERVICE=$(SERVICE) bash scripts/rollback.sh $(REVISION)
+
+# Model for EN_GU_MODEL_DELIVERY=gcs: best.pt and its version sidecar, read by Cloud Run through a volume
+upload-model-gcs:
+	gcloud storage cp models/best.pt "gs://$(BUCKET)/best.pt"
+	if [ -f models/best.pt.version.json ]; then gcloud storage cp models/best.pt.version.json "gs://$(BUCKET)/"; fi

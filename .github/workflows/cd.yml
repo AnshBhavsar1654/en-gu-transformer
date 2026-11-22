@@ -1,6 +1,7 @@
 # CD: every merge to main
-#   CI again on the merged commit -> build and push images tagged with the git SHA -> deploy to staging
-#   -> smoke test staging -> manual approval -> deploy to production -> smoke test production
+#   CI again on the merged commit -> build and push images tagged with the git SHA -> staging rollout
+#   (0% -> smoke -> 100%) -> manual approval -> production rollout (0% -> smoke -> 10% canary -> 100%) -> UIs
+#   Each rollout is in deploy.yml; a failure at any step sends traffic back to the previous revision.
 #
 # Images always go to GitHub Container Registry. The Cloud Run steps run only once the GCP repository variables
 # are set (scripts/setup_gcp_cicd.sh prints them); until then the pipeline stops after publishing the images.
@@ -37,9 +38,11 @@ jobs:
     outputs:
       api-image: ${{ steps.names.outputs.api }}
       gcp-image: ${{ steps.names.outputs.gcp }}
+      gcp-ui-image: ${{ steps.names.outputs.gcp_ui }}
       deploy: ${{ steps.names.outputs.deploy }}
     env:
       REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+      MODEL_DELIVERY: ${{ vars.EN_GU_MODEL_DELIVERY || 'hub' }}
     steps:
       - uses: actions/checkout@v4
       - name: Image names
@@ -54,6 +57,7 @@ jobs:
             if [ -n "${{ vars.GCP_PROJECT_ID }}" ]; then
               repo="${{ vars.GCP_AR_REPO || 'en-gu' }}"
               echo "gcp=${REGION}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${repo}/en-gu-api:${GITHUB_SHA}"
+              echo "gcp_ui=${REGION}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${repo}/en-gu-ui:${GITHUB_SHA}"
               echo "deploy=true"
             else
               echo "deploy=false"
@@ -89,7 +93,28 @@ jobs:
           cache-from: type=gha,scope=ui
           cache-to: type=gha,scope=ui,mode=max
 
-      # Cloud Run pulls from Artifact Registry, so copy the api image there (no rebuild: same digest)
+      # EN_GU_MODEL_DELIVERY=baked: the deployed image carries the model (no download at startup). The model comes
+      # from the public Hugging Face repo that serve.yaml names, so the build needs no registry access.
+      - name: Download the model for the baked image
+        if: steps.names.outputs.deploy == 'true' && env.MODEL_DELIVERY == 'baked'
+        run: |
+          repo=$(sed -n 's/^ *hub_repo: *\([^ #]*\).*/\1/p' configs/serve.yaml)
+          file=$(sed -n 's/^ *hub_filename: *\([^ #]*\).*/\1/p' configs/serve.yaml)
+          mkdir -p models
+          curl -fsSL --retry 3 -o models/best.pt "https://huggingface.co/${repo}/resolve/main/${file}"
+          ls -l models/best.pt
+      - name: Build and push api-baked
+        if: steps.names.outputs.deploy == 'true' && env.MODEL_DELIVERY == 'baked'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: api-baked
+          push: true
+          tags: ${{ steps.names.outputs.api }}-baked
+          build-args: GIT_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=api
+
+      # Cloud Run pulls from Artifact Registry, so copy the images there (no rebuild: same digest)
       - uses: google-github-actions/auth@v2
         if: steps.names.outputs.deploy == 'true'
         with:
@@ -98,11 +123,14 @@ jobs:
           service_account: ${{ vars.GCP_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v2
         if: steps.names.outputs.deploy == 'true'
-      - name: Copy the api image to Artifact Registry
+      - name: Copy the images to Artifact Registry
         if: steps.names.outputs.deploy == 'true'
         run: |
           gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
-          docker buildx imagetools create --tag "${{ steps.names.outputs.gcp }}" "${{ steps.names.outputs.api }}"
+          api="${{ steps.names.outputs.api }}"
+          if [ "$MODEL_DELIVERY" = "baked" ]; then api="${api}-baked"; fi
+          docker buildx imagetools create --tag "${{ steps.names.outputs.gcp }}" "$api"
+          docker buildx imagetools create --tag "${{ steps.names.outputs.gcp_ui }}" "${{ steps.names.outputs.ui }}"
 
       - name: Summary
         run: |
@@ -111,7 +139,8 @@ jobs:
             echo "- \`${{ steps.names.outputs.api }}\`"
             echo "- \`${{ steps.names.outputs.ui }}\`"
             if [ "${{ steps.names.outputs.deploy }}" = "true" ]; then
-              echo "- \`${{ steps.names.outputs.gcp }}\`"
+              echo "- \`${{ steps.names.outputs.gcp }}\` (model delivery: $MODEL_DELIVERY)"
+              echo "- \`${{ steps.names.outputs.gcp_ui }}\`"
             else
               echo ""
               echo "Staging and production deploys are skipped: set the GCP_* repository variables"
@@ -132,6 +161,9 @@ jobs:
       service: ${{ vars.STAGING_SERVICE || 'en-gu-api-staging' }}
       image: ${{ needs.publish.outputs.gcp-image }}
       smoke-feedback: true
+      canary-percent: 0          # staging has no users: straight to 100% after the smoke test
+      ui-service: ${{ vars.STAGING_UI_SERVICE || 'en-gu-ui-staging' }}
+      ui-image: ${{ needs.publish.outputs.gcp-ui-image }}
 
   production:
     name: Production
@@ -145,3 +177,7 @@ jobs:
       service: ${{ vars.PRODUCTION_SERVICE || 'en-gu-api' }}
       image: ${{ needs.publish.outputs.gcp-image }}
       smoke-feedback: false
+      canary-percent: ${{ fromJSON(vars.CANARY_PERCENT || '10') }}
+      canary-minutes: ${{ fromJSON(vars.CANARY_MINUTES || '5') }}
+      ui-service: ${{ vars.PRODUCTION_UI_SERVICE || 'en-gu-ui' }}
+      ui-image: ${{ needs.publish.outputs.gcp-ui-image }}

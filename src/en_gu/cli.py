@@ -2,7 +2,8 @@
 
 Stages: prepare -> tokenizer -> train -> evaluate -> export. `score` evaluates any exported checkpoint;
 `promote`, `backfill-run1` and `registry` manage the model registry; `serve` runs the inference API and
-`fetch-model` copies a registry version out for serving. `make-tiny-model` and `smoke-test` are for CI.
+`fetch-model` copies a registry version out for serving. `make-tiny-model`, `smoke-test`, `canary` and
+`cold-start` are for CI/CD and for operating the deployed service.
 """
 
 import argparse
@@ -103,12 +104,18 @@ def build_parser():
     from en_gu.smoke import build_parser as smoke_parser
 
     smoke_parser(sub.add_parser("smoke-test", help="run HTTP smoke checks against a running API"))
+
+    from en_gu.canary import build_parser as canary_parser
+    from en_gu.coldstart import build_parser as coldstart_parser
+
+    canary_parser(sub.add_parser("canary", help="probe a new revision during a canary rollout"))
+    coldstart_parser(sub.add_parser("cold-start", help="measure cold starts of a deployed API"))
     return parser
 
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
-    # The CI helpers need no config (smoke-test runs against remote URLs, from any directory)
+    # The CI/CD helpers need no config (they run against remote URLs, from any directory)
     if args.command == "make-tiny-model":
         from en_gu.tinymodel import make_tiny_checkpoint
 
@@ -119,6 +126,14 @@ def main(argv=None):
 
         failed = run_smoke(args.url, args.timeout, args.expect_version, args.expect_build, not args.no_feedback)
         return 1 if failed else 0
+    if args.command == "canary":
+        from en_gu.canary import run_from_args
+
+        return run_from_args(args)
+    if args.command == "cold-start":
+        from en_gu.coldstart import run_from_args
+
+        return run_from_args(args)
     if args.command in ("serve", "fetch-model"):
         from en_gu.serving import SERVE_CONFIGS
 

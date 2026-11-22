@@ -97,7 +97,7 @@ STANDALONE=1 streamlit run app.py                        # UI only: loads ./best
 | `POST /feedback` | `{"request_id", "rating": "up" \| "down", "model_version"?, "corrected_translation"?, "source_text"?, "translation"?}` |
 | `GET /health` | Liveness: the process is up |
 | `GET /ready` | Readiness: 503 while the model loads (or if it failed to load, with the reason), 200 with the model version after |
-| `GET /info` | Model version, architecture, test scores and request limits |
+| `GET /info` | Model version, architecture, test scores, request limits, build (git commit), and which revision/instance answered (with its uptime) |
 | `GET /metrics` | Prometheus metrics: requests by route and status, latency histograms, model time per beam size, sentences and characters per request, feedback counts, model info and load time |
 
 ```bash
@@ -240,16 +240,18 @@ large files such as checkpoints) before each commit.
 pull request ──▶ ci.yml:  Lint ─▶ Tests and model smoke test ─▶ Docker build and container smoke test
                           (all three are required checks; main accepts changes only through pull requests)
 
-merge to main ─▶ cd.yml:  CI again ─▶ build + push images (tag = git SHA) ─▶ staging ─▶ smoke test
-                                                                     ─▶ manual approval ─▶ production ─▶ smoke test
-                                                                        (failed smoke test = traffic rolled back)
+merge to main ─▶ cd.yml:  CI again ─▶ build + push images (tag = git SHA)
+                 ─▶ staging:     new revision at 0% ─▶ smoke test ─▶ 100% ─▶ smoke test ─▶ UI
+                 ─▶ manual approval
+                 ─▶ production:  new revision at 0% ─▶ smoke test ─▶ 10% canary, 5 min ─▶ 100% ─▶ smoke test ─▶ UI
+                    (any failure = 100% of traffic back on the previous revision)
 ```
 
 | Workflow | What it does |
 |---|---|
 | `.github/workflows/ci.yml` | On every pull request: `ruff check` and `ruff format --check`; the unit tests; the model smoke tests; then builds the `api` and `ui` images, has the `api` image generate a tiny model, starts the container and runs the HTTP smoke test against it (including that `/info` reports the commit being tested). Image sizes go to the job summary. |
-| `.github/workflows/cd.yml` | On every merge to `main`: re-runs CI on the merged commit, pushes `ghcr.io/anshbhavsar1654/en-gu-api` and `en-gu-ui` tagged with the git SHA (and `main`), copies the API image to Artifact Registry, then deploys to staging and, after approval, to production. |
-| `.github/workflows/deploy.yml` | Reusable deploy of one image to one Cloud Run service: remembers the revision currently serving, deploys, runs the smoke test against the public URL, and shifts traffic back to the remembered revision if the test fails. |
+| `.github/workflows/cd.yml` | On every merge to `main`: re-runs CI on the merged commit, pushes `ghcr.io/anshbhavsar1654/en-gu-api` and `en-gu-ui` tagged with the git SHA (and `main`), copies both to Artifact Registry, then rolls out to staging and, after approval, to production. |
+| `.github/workflows/deploy.yml` | Reusable progressive rollout of one API image to one Cloud Run service, then the UI pointed at it (see [Cloud deployment](#cloud-deployment-cloud-run)). |
 
 CI never needs the 122 MB model or the corpus: `python -m en_gu make-tiny-model` builds a tiny random checkpoint in the
 real format in a few seconds, so the loader, tokenizer, beam search and API are all exercised. The translations are
@@ -272,15 +274,60 @@ one line per check and exits 1 if any check fails.
 1. `bash scripts/setup_github.sh`: branch protection on `main` (pull requests only, the three CI checks required, no
    force pushes, admins included) and the `staging` and `production` environments, with you as the required reviewer
    for production. Run it after CI has run once, so GitHub knows the check names.
-2. `PROJECT_ID=<gcp-project> bash scripts/setup_gcp_cicd.sh`: Artifact Registry repository, a deployer service
-   account with only `run.admin` and `artifactregistry.writer`, and Workload Identity Federation that trusts only this
-   repository, so **no cloud key is stored in GitHub**. It sets the repository variables `GCP_PROJECT_ID`,
-   `GCP_REGION`, `GCP_AR_REPO`, `GCP_WIF_PROVIDER` and `GCP_DEPLOY_SA`.
+2. `PROJECT_ID=<gcp-project> BILLING_ACCOUNT=<id> bash scripts/setup_gcp_cicd.sh`: Artifact Registry repository, a
+   deployer service account with only `run.admin` and `artifactregistry.writer`, and Workload Identity Federation that
+   trusts only this repository, so **no cloud key is stored in GitHub**. With `BILLING_ACCOUNT` (from
+   `gcloud billing accounts list`) it also creates a monthly budget (`BUDGET_USD`, default 5) with e-mail alerts at
+   50/90/100%; with `MODEL_BUCKET` a private bucket for the model. It sets the repository variables `GCP_PROJECT_ID`,
+   `GCP_REGION`, `GCP_AR_REPO`, `GCP_WIF_PROVIDER`, `GCP_DEPLOY_SA` (and `GCP_MODEL_BUCKET`).
 
-Until the GCP variables exist, CD stops after publishing the images to GHCR and says so in the run summary. Optional
-variables: `STAGING_SERVICE` / `PRODUCTION_SERVICE` (default `en-gu-api-staging` / `en-gu-api`) and
-`EN_GU_MODEL_SOURCE` (default `hub`: the service downloads `best.pt` from Hugging Face at startup). Cloud Run sizing,
-canary traffic splits and the cold-start comparison with the `api-baked` image are Phase 4.
+Until the GCP variables exist, CD stops after publishing the images to GHCR and says so in the run summary.
+
+## Cloud deployment (Cloud Run)
+
+Four Cloud Run services, all scale-to-zero and capped at 2 instances: `en-gu-api-staging`, `en-gu-ui-staging`,
+`en-gu-api` and `en-gu-ui` (production). Each UI is the Streamlit image with `EN_GU_API_URL` pointing at its API.
+Operating them (rollback, failed deploys, canary, budget alert) is in [RUNBOOKS.md](RUNBOOKS.md).
+
+**Revision-based rollout** (`.github/workflows/deploy.yml`):
+
+1. Note the revision serving traffic now.
+2. Deploy the new image as revision `<service>-<sha7>-<run id>-<attempt>` with **0% traffic** and the tag
+   `candidate`, which gives it its own URL (`https://candidate---<service host>`).
+3. Smoke-test that URL: users can't reach the revision yet.
+4. Production only: tag the old revision `stable` and give the new one **10% of traffic for 5 minutes**. During the
+   window `python -m en_gu canary` sends a translation every 5 s to both tag URLs and fails if the new revision's
+   error rate is above 2% or its p95 is above max(1.5 × stable p95, stable p95 + 250 ms).
+5. Promote to 100% and smoke-test the public URL.
+6. Deploy the UI. A failed UI deploy doesn't touch the API.
+
+A failure in steps 2–5 sends 100% of traffic back to the revision from step 1. Rolling back by hand is
+`SERVICE=en-gu-api bash scripts/rollback.sh` (see the runbook; target under 2 minutes).
+
+**Sizing** (API): 1 vCPU, 2 GiB, startup CPU boost, concurrency 4, request timeout 60 s. Translations run one at a
+time per instance, so concurrency only lets a few requests queue instead of starting a new instance for each. A
+**startup probe on `/ready`** (every 3 s, up to 240 s) keeps Cloud Run from routing requests to an instance before its
+model is loaded: a request that arrives during a cold start waits instead of getting a 503. Liveness is `/health`.
+These values are a starting point; concurrency and timeout get revisited with load-test numbers (Phase 7).
+
+**Model delivery**, set with the repository variable `EN_GU_MODEL_DELIVERY`:
+
+| Value | How the model gets into the container | Cold start (first request after idle) |
+|---|---|---|
+| `hub` (default) | Downloaded from the Hugging Face repo at startup | not measured yet |
+| `gcs` | Read from a private Cloud Storage bucket mounted at `/models` (needs `GCP_MODEL_BUCKET`, `make upload-model-gcs`) | not measured yet |
+| `baked` | Built into the image (`api-baked` target); CD downloads it while building | not measured yet |
+
+`python -m en_gu cold-start --url <api-url>` measures it: it waits for the service to scale to zero, times the first
+translation, and uses `/info` (`instance`, `uptime_seconds`, `load_seconds`, `revision`) to confirm that a fresh
+instance answered. The table gets filled in from staging measurements.
+
+Other optional repository variables: `STAGING_SERVICE` / `PRODUCTION_SERVICE` / `STAGING_UI_SERVICE` /
+`PRODUCTION_UI_SERVICE` (service names), `CANARY_PERCENT` (10), `CANARY_MINUTES` (5), `CANARY_MAX_ERROR_RATE`
+(0.02), `CANARY_MAX_P95_RATIO` (1.5).
+
+**Cost.** Scale-to-zero plus the 2-instance caps keep a portfolio-level load inside the Cloud Run free tier; the
+budget alert is the safety net. Keeping an instance warm would remove cold starts but is billed around the clock.
 
 ## Publish the model to Hugging Face (optional)
 
@@ -298,12 +345,15 @@ src/en_gu/               Package: model.py (Transformer, decoding, loader), data
                          train.py, evaluate.py, export.py, config.py, cli.py,
                          tracking.py, registry.py, gate.py, promote.py, backfill.py,
                          api.py, serving.py, feedback.py, metrics.py, textutils.py,
-                         smoke.py (HTTP smoke test), tinymodel.py (tiny random model for tests and CI)
+                         smoke.py (HTTP smoke test), tinymodel.py (tiny random model for tests and CI),
+                         canary.py (canary probe), coldstart.py (cold-start measurement)
 configs/                 base.yaml (run 1 hyperparameters), smoke.yaml (tiny CPU run), serve.yaml (API)
 Dockerfile               Targets: api, api-baked, ui
 docker-compose.yml       Local stack: API + UI
-.github/workflows/       ci.yml (pull requests), cd.yml (main -> staging -> production), deploy.yml (reusable)
+.github/workflows/       ci.yml (pull requests), cd.yml (main -> staging -> production), deploy.yml (rollout)
 scripts/                 One-time setup: setup_github.sh (branch protection, environments), setup_gcp_cicd.sh
+                         (GCP, budget, model bucket); rollback.sh (Cloud Run traffic rollback)
+RUNBOOKS.md              Operating the deployed service: rollback, failed deploys, canary, cold starts, budget
 tests/                   pytest suite
 notebooks/kaggle_runner.ipynb    Thin notebook that runs the pipeline on Kaggle
 notebooks/archive/       Run 1 notebook with its training log

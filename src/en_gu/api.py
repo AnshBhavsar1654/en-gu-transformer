@@ -4,7 +4,8 @@
     GET  /health      the process is up (liveness)
     GET  /ready       the model is loaded and requests can be served (readiness)
     POST /feedback    {request_id, rating: up|down, corrected_translation?, ...} -> stored for the improvement loop
-    GET  /info        model details, request limits and the build (git commit) of the running image
+    GET  /info        model details, request limits, the build (git commit) of the running image, and which
+                      instance/revision answered (used to tell canary traffic apart and to measure cold starts)
     GET  /metrics     Prometheus metrics
 
 Run it with `python -m en_gu serve` or `uvicorn --factory en_gu.api:create_app`. The model loads in a background
@@ -116,6 +117,9 @@ def create_app(cfg=None, translator=None, background=True):
     state = ServiceState(metrics)
     feedback_store = FeedbackStore(settings["feedback_db"], settings.get("feedback_retention_days"))
     build = os.environ.get("EN_GU_BUILD_SHA") or None  # git commit baked into the image by CI
+    revision = os.environ.get("K_REVISION") or None  # set by Cloud Run: which revision served the request
+    instance = uuid.uuid4().hex[:12]  # one id per process, so a new (cold) instance is recognisable
+    started = time.time()
 
     @asynccontextmanager
     async def lifespan(app):
@@ -175,7 +179,15 @@ def create_app(cfg=None, translator=None, background=True):
 
     @app.get("/info")
     def info():
-        return {**state.require_translator().info(), "limits": limits, "api_version": __version__, "build": build}
+        return {
+            **state.require_translator().info(),
+            "limits": limits,
+            "api_version": __version__,
+            "build": build,
+            "revision": revision,
+            "instance": instance,
+            "uptime_seconds": round(time.time() - started, 1),
+        }
 
     @app.post("/translate", response_model=TranslateResponse)
     def translate(body: TranslateRequest, request: Request):
