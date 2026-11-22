@@ -1,6 +1,12 @@
-# Reusable: deploy one image to one Cloud Run service, smoke test it, and roll traffic back if the test fails.
-# Called by cd.yml for staging and production. Authentication uses Workload Identity Federation, so no
-# long-lived service-account key is stored in GitHub (see scripts/setup_gcp_cicd.sh).
+# Reusable: progressive rollout of one API image to one Cloud Run service (called by cd.yml for staging and
+# production), then the Streamlit UI pointed at it.
+#
+#   new revision at 0% (tag `candidate`) -> smoke test its tag URL -> [canary: N% of traffic, probed for M minutes
+#   and compared with the `stable` revision] -> 100% -> smoke test the public URL
+#
+# Any failure after the new revision exists sends 100% of traffic back to the revision that was serving before, so
+# users only ever see a broken revision through the canary share. Authentication uses Workload Identity Federation,
+# so no long-lived service-account key is stored in GitHub (see scripts/setup_gcp_cicd.sh).
 
 name: Deploy
 
@@ -12,21 +18,40 @@ on:
         type: string
         required: true
       service:
-        description: Cloud Run service name
+        description: Cloud Run service name of the API
         type: string
         required: true
       image:
-        description: Full image reference in Artifact Registry, tagged with the git SHA
+        description: Full API image reference in Artifact Registry, tagged with the git SHA
         type: string
         required: true
       smoke-feedback:
         description: Let the smoke test write a feedback row (off for production)
         type: boolean
         default: true
+      canary-percent:
+        description: Share of traffic the new revision gets during the canary window (0 = straight to 100%)
+        type: number
+        default: 0
+      canary-minutes:
+        description: Length of the canary window
+        type: number
+        default: 5
+      ui-service:
+        description: Cloud Run service name of the Streamlit UI (empty = don't deploy the UI)
+        type: string
+        default: ""
+      ui-image:
+        description: Full UI image reference in Artifact Registry
+        type: string
+        default: ""
     outputs:
       url:
-        description: Service URL
+        description: API URL
         value: ${{ jobs.deploy.outputs.url }}
+      ui-url:
+        description: UI URL
+        value: ${{ jobs.deploy.outputs.ui-url }}
 
 permissions:
   contents: read
@@ -36,16 +61,22 @@ jobs:
   deploy:
     name: Deploy to ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     environment:
       name: ${{ inputs.environment }}
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${{ steps.ui.outputs.url || steps.deploy.outputs.url }}
     outputs:
       url: ${{ steps.deploy.outputs.url }}
+      ui-url: ${{ steps.ui.outputs.url }}
     env:
       REGION: ${{ vars.GCP_REGION || 'us-central1' }}
       SERVICE: ${{ inputs.service }}
       IMAGE: ${{ inputs.image }}
+      # hub = download best.pt from Hugging Face at startup; gcs = read it from a Cloud Storage volume;
+      # baked = the image already contains it (cd.yml then builds the api-baked target)
+      MODEL_DELIVERY: ${{ vars.EN_GU_MODEL_DELIVERY || 'hub' }}
+      MODEL_BUCKET: ${{ vars.GCP_MODEL_BUCKET }}
+      PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2
@@ -55,51 +86,147 @@ jobs:
           service_account: ${{ vars.GCP_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Remember the revision currently serving traffic
+      - name: Find the revision serving traffic now
         id: before
         run: |
-          prev=$(gcloud run services describe "$SERVICE" --region "$REGION" \
-                   --format='value(status.latestReadyRevisionName)' 2>/dev/null || true)
+          # The revision with the largest traffic share (100% unless a canary was interrupted)
+          prev=$(gcloud run services describe "$SERVICE" --region "$REGION" --format=json 2>/dev/null |
+                   jq -r '[.status.traffic[]? | select(.revisionName != null and (.percent // 0) > 0)]
+                          | max_by(.percent) | .revisionName // empty' || true)
           echo "revision=$prev" >> "$GITHUB_OUTPUT"
           echo "Serving before deploy: ${prev:-none (first deploy)}"
 
-      - name: Deploy ${{ inputs.image }}
+      - name: Deploy the new revision with no traffic
         id: deploy
-        # Model comes from the Hugging Face repo at startup (EN_GU_MODEL_SOURCE=hub); Phase 4 compares this with
-        # the api-baked image. One translation at a time per instance (see the README), so low concurrency.
         run: |
+          # Deterministic revision name: <service>-<sha7>-<run id>-<attempt>, so a re-run never collides
+          suffix="${GITHUB_SHA::7}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          revision="${SERVICE}-${suffix}"
+
+          case "$MODEL_DELIVERY" in
+            hub)   model=(--set-env-vars "EN_GU_MODEL_SOURCE=hub"
+                          --clear-volumes --clear-volume-mounts) ;;
+            baked) model=(--set-env-vars "EN_GU_MODEL_SOURCE=path,EN_GU_MODEL_PATH=/models/best.pt"
+                          --clear-volumes --clear-volume-mounts) ;;
+            gcs)   : "${MODEL_BUCKET:?set the GCP_MODEL_BUCKET repository variable for EN_GU_MODEL_DELIVERY=gcs}"
+                   model=(--set-env-vars "EN_GU_MODEL_SOURCE=path,EN_GU_MODEL_PATH=/models/best.pt"
+                          --execution-environment gen2 --clear-volumes --clear-volume-mounts
+                          --add-volume "name=models,type=cloud-storage,bucket=${MODEL_BUCKET},readonly=true"
+                          --add-volume-mount "volume=models,mount-path=/models") ;;
+            *)     echo "::error::Unknown EN_GU_MODEL_DELIVERY '$MODEL_DELIVERY' (hub | gcs | baked)"; exit 1 ;;
+          esac
+          if [ -n "${{ steps.before.outputs.revision }}" ]; then
+            traffic=(--no-traffic --tag candidate)
+          else
+            traffic=()   # a brand-new service can't start at 0%: the first revision takes all traffic
+          fi
+
+          # Sizing: one translation at a time per instance (see the README), so low concurrency. The startup probe
+          # waits for /ready, so Cloud Run only routes requests to an instance once its model is loaded; until then
+          # a request waits instead of getting a 503. Max startup = 3 s x 80 = 240 s (the Cloud Run limit).
           gcloud run deploy "$SERVICE" \
             --image "$IMAGE" \
             --region "$REGION" \
+            --revision-suffix "$suffix" \
             --port 8000 \
             --cpu 1 --memory 2Gi --cpu-boost \
             --concurrency 4 --timeout 60 \
             --min-instances 0 --max-instances 2 \
-            --set-env-vars "EN_GU_MODEL_SOURCE=${{ vars.EN_GU_MODEL_SOURCE || 'hub' }}" \
-            --labels "commit-sha=${GITHUB_SHA},environment=${{ inputs.environment }}" \
+            --startup-probe "httpGet.path=/ready,httpGet.port=8000,initialDelaySeconds=0,timeoutSeconds=2,periodSeconds=3,failureThreshold=80" \
+            --liveness-probe "httpGet.path=/health,httpGet.port=8000,periodSeconds=30,timeoutSeconds=5,failureThreshold=3" \
+            "${model[@]}" \
+            --labels "commit-sha=${GITHUB_SHA},environment=${{ inputs.environment }},model-delivery=${MODEL_DELIVERY}" \
             --allow-unauthenticated \
+            "${traffic[@]}" \
             --quiet
-          url=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
-          echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Smoke test ${{ inputs.environment }}
+          describe=$(gcloud run services describe "$SERVICE" --region "$REGION" --format=json)
+          url=$(jq -r '.status.url' <<<"$describe")
+          candidate_url=$(jq -r '.status.traffic[]? | select(.tag == "candidate") | .url' <<<"$describe")
+          {
+            echo "revision=$revision"
+            echo "url=$url"
+            echo "candidate-url=${candidate_url:-$url}"
+          } >> "$GITHUB_OUTPUT"
+          echo "New revision $revision: ${candidate_url:-$url}"
+
+      - name: Smoke test the new revision (no user traffic yet)
         run: |
-          PYTHONPATH=src python3 -m en_gu.smoke --url "${{ steps.deploy.outputs.url }}" --timeout 300 \
+          python3 -m en_gu.smoke --url "${{ steps.deploy.outputs.candidate-url }}" --timeout 300 \
             --expect-build "$GITHUB_SHA" ${{ !inputs.smoke-feedback && '--no-feedback' || '' }}
+
+      - name: Canary (${{ inputs.canary-percent }}% for ${{ inputs.canary-minutes }} min)
+        if: inputs.canary-percent > 0 && steps.before.outputs.revision != ''
+        env:
+          PREV: ${{ steps.before.outputs.revision }}
+          NEW: ${{ steps.deploy.outputs.revision }}
+          PCT: ${{ inputs.canary-percent }}
+        run: |
+          # Tag the old revision so it can be probed directly, then split the traffic
+          gcloud run services update-traffic "$SERVICE" --region "$REGION" --update-tags "stable=$PREV" --quiet
+          gcloud run services update-traffic "$SERVICE" --region "$REGION" \
+            --to-revisions "$NEW=$PCT,$PREV=$((100 - PCT))" --quiet
+          stable_url=$(gcloud run services describe "$SERVICE" --region "$REGION" --format=json |
+                         jq -r '.status.traffic[]? | select(.tag == "stable") | .url')
+          python3 -m en_gu.canary --url "${{ steps.deploy.outputs.candidate-url }}" --baseline-url "$stable_url" \
+            --minutes "${{ inputs.canary-minutes }}" \
+            --max-error-rate "${{ vars.CANARY_MAX_ERROR_RATE || '0.02' }}" \
+            --max-p95-ratio "${{ vars.CANARY_MAX_P95_RATIO || '1.5' }}"
+
+      - name: Promote to 100%
+        run: |
+          gcloud run services update-traffic "$SERVICE" --region "$REGION" \
+            --to-revisions "${{ steps.deploy.outputs.revision }}=100" --quiet
+
+      - name: Smoke test the public URL
+        run: |
+          python3 -m en_gu.smoke --url "${{ steps.deploy.outputs.url }}" --timeout 300 \
+            --expect-build "$GITHUB_SHA" --no-feedback
 
       - name: Roll back to the previous revision
         if: failure() && steps.before.outputs.revision != ''
         run: |
           gcloud run services update-traffic "$SERVICE" --region "$REGION" \
             --to-revisions "${{ steps.before.outputs.revision }}=100" --quiet
-          echo "::error::Smoke test failed on ${{ inputs.environment }}; traffic is back on ${{ steps.before.outputs.revision }}"
+          echo "::error::Rollout to ${{ inputs.environment }} failed; traffic is back on ${{ steps.before.outputs.revision }}"
+
+      # The UI comes after the rollback step on purpose: a failed UI deploy must not roll back a healthy API
+      - name: Deploy the UI
+        id: ui
+        if: inputs.ui-service != '' && inputs.ui-image != ''
+        env:
+          UI_SERVICE: ${{ inputs.ui-service }}
+        run: |
+          # Streamlit keeps a websocket open per browser session: session affinity, long request timeout.
+          # The UI only calls the API (no torch), so it needs little memory.
+          gcloud run deploy "$UI_SERVICE" \
+            --image "${{ inputs.ui-image }}" \
+            --region "$REGION" \
+            --port 8501 \
+            --cpu 1 --memory 512Mi \
+            --concurrency 40 --timeout 3600 --session-affinity \
+            --min-instances 0 --max-instances 2 \
+            --set-env-vars "EN_GU_API_URL=${{ steps.deploy.outputs.url }}" \
+            --labels "commit-sha=${GITHUB_SHA},environment=${{ inputs.environment }}" \
+            --allow-unauthenticated \
+            --quiet
+          url=$(gcloud run services describe "$UI_SERVICE" --region "$REGION" --format='value(status.url)')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          for i in $(seq 1 30); do
+            if curl -fsS "$url/_stcore/health" >/dev/null; then echo "UI is up: $url"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::UI at $url did not answer /_stcore/health"; exit 1
 
       - name: Summary
         if: always()
         run: |
           {
             echo "### ${{ inputs.environment }}: ${{ job.status }}"
-            echo "- Service: \`$SERVICE\` ($REGION) – ${{ steps.deploy.outputs.url }}"
-            echo "- Image: \`$IMAGE\`"
+            echo "- API: \`$SERVICE\` ($REGION) – ${{ steps.deploy.outputs.url }}"
+            echo "- New revision: \`${{ steps.deploy.outputs.revision || 'not created' }}\`"
             echo "- Previous revision: \`${{ steps.before.outputs.revision || 'none' }}\`"
+            echo "- Image: \`$IMAGE\` (model delivery: $MODEL_DELIVERY)"
+            echo "- Canary: ${{ inputs.canary-percent > 0 && format('{0}% for {1} min', inputs.canary-percent, inputs.canary-minutes) || 'none' }}"
+            if [ -n "${{ steps.ui.outputs.url }}" ]; then echo "- UI: ${{ steps.ui.outputs.url }}"; fi
           } >> "$GITHUB_STEP_SUMMARY"
