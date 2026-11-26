@@ -1,425 +1,97 @@
 # English → Gujarati Neural Machine Translation
 
-A Transformer encoder-decoder trained **from scratch** in PyTorch to translate English into Gujarati, served by a
-FastAPI inference service in Docker with a Streamlit front end, tested and shipped by GitHub Actions CI/CD. Training
-runs on Kaggle (2×T4); inference runs on CPU.
+A 60.5M-parameter Transformer trained from scratch in PyTorch. FastAPI serves translations on CPU, Streamlit provides
+the UI, and GitHub Actions tests and packages both.
 
-## Results (run 1)
+**What is your name?** → તમારું નામ શું છે?
 
-Evaluated on 2,000 held-out sentences. Their English sources are excluded from training.
+On the original 2,000-sentence Kaggle test split, beam search (beam 5) scored **16.68 BLEU**, **40.48 chrF++**, and
+**74.96 TER**. Training used the first million corpus pairs. The frozen set in `data/eval/` overlaps the original
+training data, so use the Kaggle scores when reporting this checkpoint’s quality. Translation is sentence by sentence,
+and quality is limited on long, informal, or specialized text. [Model card](MODEL_CARD.md)
 
-| Decoding | BLEU | chrF++ | TER ↓ |
-|---|---|---|---|
-| Greedy | 16.28 | 40.06 | 76.08 |
-| Beam search (beam 5) | **16.68** | **40.48** | **74.96** |
+## Quick start
 
-Sample translations (beam 5):
-
-| English | Gujarati |
-|---|---|
-| Can I get your contact number? | શું હું તમારો સંપર્ક નંબર મેળવી શકું છું? |
-| What is your name? | તમારું નામ શું છે? |
-| The government has announced new schemes for farmers. | સરકારે ખેડૂતો માટે નવી યોજનાઓની જાહેરાત કરી છે. |
-| India won the cricket match by five wickets. | ભારતે આ મેચ પાંચ વિકેટથી જીતી હતી. |
-
-These are modest scores. The model was trained on about a third of the available corpus, and validation loss stopped
-improving around epoch 17 (≈ 2.43), so more epochs on the same data won't help. Training on more data is the most
-direct next step.
-
-The training log and outputs of this run are kept in `notebooks/archive/run1-gujarati-english-translation.ipynb`.
-See [MODEL_CARD.md](MODEL_CARD.md) for intended use, data, limitations and the caveats on these numbers.
-
-## Model
-
-| | |
-|---|---|
-| Architecture | Transformer encoder-decoder, 6 + 6 layers, 8 heads, d_model 512, feed-forward 2048 |
-| Parameters | 60.5M |
-| Normalisation | Pre-LayerNorm |
-| Embeddings | One joint English+Gujarati SentencePiece vocabulary (32k, unigram, byte fallback), shared by the encoder input, decoder input and output projection |
-| Positions | Sinusoidal, max length 256 tokens |
-| Attention | Fused `scaled_dot_product_attention` |
-| Decoding | Batched beam search (default beam 5) or greedy |
-
-## Training (run 1)
-
-| | |
-|---|---|
-| Data | [English to Gujarati Machine Translation Dataset](https://www.kaggle.com/datasets/parvmodi/english-to-gujarati-machine-translation-dataset): first 1M pairs (of ~3.07M); 990,453 kept after cleaning and deduplication; 976,296 used for training |
-| Cleaning | Drops misaligned pairs, untranslated lines, non-Gujarati targets, over-long sentences and duplicates |
-| Batching | Length-bucketed, ~24.6k tokens per update |
-| Optimisation | Adam, inverse-sqrt schedule (4k warmup, peak LR 7e-4), label smoothing 0.1, gradient clipping, fp16 mixed precision |
-| Run | 30 epochs, 18,450 updates, ~3.1 h on 2×T4 |
-| Model selection | Last / best-validation / average of the last 5 checkpoints; the average won and was exported |
-
-## Serving: API, UI and Docker
-
-The model is served by a FastAPI inference service; the Streamlit app is a thin client of it.
-
-```
-Streamlit UI (app.py) ──HTTP──▶ FastAPI service (src/en_gu/api.py) ◀── models/best.pt  (registry champion)
-   👍 / 👎 / corrections ──────▶   /translate /feedback /health /ready /info /metrics
-```
-
-### 1. Get the model
+Download the 122 MB self-contained checkpoint and start the API and UI with Docker Compose. If you already have a
+checkpoint, place it at `models/best.pt` and run Compose.
 
 ```bash
-python -m en_gu fetch-model        # copies the registry champion to models/best.pt (+ best.pt.version.json)
+mkdir -p models
+curl -fL https://huggingface.co/ansh164/english-gujarati-transformer/resolve/main/best.pt -o models/best.pt
+docker compose up --build
 ```
 
-The sidecar file carries the registry version (e.g. `v1`), which the API returns with every translation. Without a
-registry, put any self-contained `best.pt` at `models/best.pt` (its version is then shown as a content hash), or set
-`EN_GU_MODEL_SOURCE=hub` to download it from the Hugging Face repo, or `EN_GU_MODEL_SOURCE=registry` to load the
-champion straight from MLflow.
-
-### 2a. Run with Docker (API + UI)
+Open the [Streamlit UI](http://localhost:8501) or [API docs](http://localhost:8000/docs).
 
 ```bash
-docker compose up --build          # UI: http://localhost:8501   API docs: http://localhost:8000/docs
+curl -fsS http://localhost:8000/translate \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"What is your name?","beam_size":5}'
 ```
 
-The UI starts once the API reports ready (model loaded). Feedback is kept in a Docker volume.
+`POST /translate` returns the translation, model version, request ID, latency, and sentence count. The default limits
+are 2,000 characters, 40 sentences, and beam sizes 1–8. `POST /feedback` accepts a rating and an optional correction.
+Use `/health` for liveness, `/ready` for model readiness, `/info` for model and revision details, and `/metrics` for
+Prometheus. [Serving configuration](configs/serve.yaml)
 
-### 2b. Run without Docker
+For a native run, use `python -m pip install -e ".[serve]"`, then run
+`EN_GU_MODEL_PATH=models/best.pt python -m en_gu serve` and `python -m streamlit run app.py` in separate terminals.
+
+## Train and test
+
+For training, place `train.en` and `train.gu` under `en-gu/`. Run the full pipeline on a GPU, or use the smoke config for
+a small CPU run. [Training dataset](https://www.kaggle.com/datasets/parvmodi/english-to-gujarati-machine-translation-dataset) ·
+[Kaggle runner](notebooks/kaggle_runner.ipynb) · [DVC stages](dvc.yaml)
 
 ```bash
-pip install -r requirements.txt    # or: pip install -e ".[serve]"
-EN_GU_MODEL_PATH=models/best.pt python -m en_gu serve    # API on http://127.0.0.1:8000
-streamlit run app.py                                     # UI on http://localhost:8501
-STANDALONE=1 streamlit run app.py                        # UI only: loads ./best.pt (else the HF copy) in-process
+python -m pip install -e ".[serve,train,dev,monitor]"
+python -m en_gu all
+python -m en_gu all --config configs/base.yaml --config configs/smoke.yaml
+python -m pytest
+python -m ruff check .
+python -m ruff format --check src tests
 ```
 
-### API
-
-| Endpoint | Purpose |
-|---|---|
-| `POST /translate` | `{"text": "...", "beam_size": 5}` → `{request_id, translation, model_version, latency_ms, n_sentences}` |
-| `POST /feedback` | `{"request_id", "rating": "up" \| "down", "model_version"?, "corrected_translation"?, "source_text"?, "translation"?}` |
-| `GET /health` | Liveness: the process is up |
-| `GET /ready` | Readiness: 503 while the model loads (or if it failed to load, with the reason), 200 with the model version after |
-| `GET /info` | Model version, architecture, test scores, request limits, build (git commit), and which revision/instance answered (with its uptime) |
-| `GET /metrics` | Prometheus metrics: requests by route and status, latency histograms, model time per beam size, sentences and characters per request, feedback counts, model info and load time |
+The pipeline cleans the corpus, trains the tokenizer and model, evaluates on the frozen split, and exports
+`artifacts/best.pt`. Tests use synthetic data and tiny checkpoints. MLflow records runs and tracks the
+`champion` and `previous` aliases. The promotion gate checks evaluation isolation, translation quality, checkpoint
+size, and CPU latency. [Training and gate configuration](configs/base.yaml)
 
 ```bash
-curl -X POST localhost:8000/translate -H "content-type: application/json" -d '{"text": "What is your name?"}'
-# {"request_id":"…","translation":"તમારું નામ શું છે?","model_version":"v1","latency_ms":108.4,"n_sentences":1}
+python -m en_gu backfill-run1 --checkpoint models/best.pt
+python -m en_gu promote --candidate artifacts/best.pt --dry-run
+python -m en_gu fetch-model
 ```
 
-- Every response has an `X-Request-ID` header (an incoming one is reused) and `X-Model-Version` once the model is loaded.
-- Input limits (in `configs/serve.yaml`): 2,000 characters, 40 sentences, beam size 1–8. Violations return 422 with a
-  readable reason. Text is split into sentences (the model was trained on single sentences) and the line layout is kept.
-- The model loads in a background thread, so the container answers `/health` immediately. A model that fails to load
-  leaves the service up with `/ready` false and the error in its body, instead of a crash loop.
-- Requests are translated one at a time per process: concurrent CPU inference only competes for the same cores.
-  Throughput and concurrency will be set from load tests.
-- Settings live in `configs/serve.yaml`; `EN_GU_MODEL_SOURCE`, `EN_GU_MODEL_PATH`, `EN_GU_MODEL_ALIAS`,
-  `EN_GU_FEEDBACK_DB`, `EN_GU_DEVICE` and `PORT` override them.
-
-**Feedback and privacy.** The API does not log request text. A thumbs up/down stores only the request id, rating and
-model version. Text (English input, model output and the user's correction) is stored only when the user submits a
-correction in the UI, which says so next to the button. Feedback rows are deleted after 90 days.
-
-### Docker images
-
-| Target | What | Size |
-|---|---|---|
-| `api` | Inference API, CPU-only torch 2.12.1, model mounted at `/models` | 994 MB |
-| `api-baked` | Same with `models/best.pt` inside, for hosts without volumes (e.g. Cloud Run) | 1.12 GB |
-| `ui` | Streamlit client (no torch) | 586 MB |
-
-Both run as a non-root user. Measured on a 16-thread laptop with Docker Desktop (WSL 2), run 1 model:
-
-| | |
-|---|---|
-| Cold start, new container → `/ready` | 4.4–9.6 s (18 s on the very first start, with a cold disk cache) |
-| Model load inside that | ~3.5 s |
-| Latency, one 10-word sentence, beam 5, 20 sequential requests | p50 207 ms, p95 307 ms |
-
-These are local numbers, not SLOs; production targets come from load tests on the deployed service.
-
-## Training pipeline
-
-The training code is a Python package (`src/en_gu/`) driven by YAML configs, so a run can be reproduced from the
-command line on any machine, not only in a notebook.
-
-```bash
-pip install -e ".[serve,train,tracking,dev]"     # package + training + MLflow + test/lint tools
-```
-
-| Stage | Command | What it does | Main outputs |
-|---|---|---|---|
-| prepare | `python -m en_gu prepare` | Clean and dedupe the corpus, split train/val/test | `data/processed/`, `data/eval/` |
-| tokenizer | `python -m en_gu tokenizer` | Train the joint SentencePiece model | `artifacts/tokenizer/` |
-| train | `python -m en_gu train` | Train; snapshots and `best.pt` refreshed at each validation | `artifacts/train/` |
-| evaluate | `python -m en_gu evaluate` | Compare last / best / averaged checkpoints on val, score the winner on test | `artifacts/eval/metrics.json` |
-| export | `python -m en_gu export` | Package the winner into one self-contained file | `artifacts/best.pt` |
-
-`python -m en_gu all` runs every stage. Hyperparameters live in `configs/base.yaml` (they match run 1); layer another
-file on top (`--config configs/base.yaml --config configs/smoke.yaml`) or override single values
-(`--set train.max_epochs=3`).
-
-- **Smoke test:** `python -m en_gu all --config configs/base.yaml --config configs/smoke.yaml` runs a tiny model on a
-  20k-sentence slice on CPU in a few minutes. It writes only to `data/smoke/`. The resulting model is not useful; it
-  just proves the pipeline works end to end.
-- **Frozen evaluation set:** the first `prepare` writes `data/eval/` together with a hash manifest. Later runs reuse
-  those files instead of regenerating them (even if the training data changes), and `evaluate` refuses to run if they
-  were modified. This keeps scores comparable between models. Set `data.refreeze_eval=true` only if you accept that
-  new scores can't be compared with old ones.
-- **Score any checkpoint:** `python -m en_gu score best.pt --split test --beam 5` (add `--limit 200` for a quick check).
-- **DVC:** `dvc.yaml` describes the same five stages for `dvc repro` (after `dvc init` and `dvc add en-gu`).
-
-> **Caveat for run 1:** the corpus copy used to generate `data/eval/` locally differs from the Kaggle copy by at
-> least one sentence pair, which changes the whole random split. The run 1 model was therefore trained on sentences
-> that appear in the locally generated eval set, so its scores there would be too optimistic. Its published scores
-> (above) come from the Kaggle test set. Compare future models against each other on `data/eval/`.
-
-### Tracking, registry and promotion gate
-
-Every pipeline run is logged to MLflow (hyperparameters, git commit, fingerprints of the training and eval data,
-the training curve, test scores and `best.pt`) in a local SQLite store (`mlflow.db` and `mlartifacts/`, both
-gitignored). Browse it with `mlflow ui --backend-store-uri sqlite:///mlflow.db`. Tracking never stops a run: if
-MLflow is missing or unreachable it logs a warning and carries on (`--set tracking.enabled=false` turns it off).
-
-Models are kept in a registry. The alias `champion` marks the model to serve; `previous` keeps the one it replaced so
-a rollback is one command. A new model becomes the champion only by passing the **promotion gate**:
-
-```bash
-python -m en_gu backfill-run1                  # once: register the Kaggle run 1 model (best.pt) as version 1
-python -m en_gu promote                        # judge artifacts/best.pt against the champion
-python -m en_gu promote --limit 200 --beam 1   # quick dry run on part of the test set; never changes the registry
-python -m en_gu registry                       # list versions and aliases
-python -m en_gu registry --rollback            # make the previous version the champion again
-```
-
-`promote` exits with a non-zero code when the candidate is rejected, so it can gate a CI job. The rules (thresholds
-are in the `gate:` section of `configs/base.yaml`):
-
-| Check | Rule |
-|---|---|
-| Isolation | The candidate must have been trained without the frozen eval sentences (its checkpoint records which eval set it was trained against) |
-| Quality | chrF++ and BLEU on the frozen test set may not drop more than 0.5 below the champion |
-| Length buckets | chrF++ in each bucket (short ≤ 10, medium 11–25, long ≥ 26 words) may not drop more than 1.5; buckets under 30 sentences are reported but not enforced |
-| Size | Checkpoint at most 300 MB |
-| Latency | p95 per sentence on CPU at most 1.25× the champion's, measured in the same run (optional absolute budget) |
-
-Run 1 was trained on a split that overlaps the frozen eval set, so its scores there are inflated. While run 1 is the
-champion, a candidate is compared against run 1's published Kaggle scores with a wider tolerance (chrF++ 1.5, BLEU 1.0)
-and the length-bucket check is skipped. After the first model trained with this pipeline is promoted, comparisons
-become like for like.
-
-### Training on Kaggle
-
-Open `notebooks/kaggle_runner.ipynb` on Kaggle (GPU T4 ×2, Internet on, the dataset above as input) and
-**Save & Run All**. It clones this repo, installs the package, and runs `python -m en_gu all` with the paths pointed
-at `/kaggle/working`. Download `/kaggle/working/best.pt` afterwards; while training, `artifacts/train/best.pt` is
-refreshed whenever validation improves, so you can grab an intermediate model. To continue a previous run, set
-`train.resume_checkpoint` to its `artifacts/train/last.pt` in the notebook's Settings cell.
-
-MLflow tracking is switched off on Kaggle. After downloading `best.pt`, judge and register it locally with
-`python -m en_gu promote --candidate best.pt`: the checkpoint records which eval set it was trained against, which is
-what the gate's isolation check reads.
-
-### Tests and linting
-
-```bash
-python -m pytest                 # 112 tests, a few minutes on CPU, no data or model download needed
-python -m pytest -m "not smoke"  # skip the model smoke tests (they start the real API process)
-python -m ruff check . && python -m ruff format --check src tests     # what CI's Lint job runs
-```
-
-The tests cover config handling, corpus cleaning, the leak-free split and frozen eval set, batching, the model and
-decoding, checkpoint loading, experiment tracking, the registry, the promotion gate, the full pipeline on a small
-synthetic corpus, and the inference API (validation, readiness, feedback, metrics) on a tiny random model. The
-**model smoke tests** (`-m smoke`) start `python -m en_gu serve` as a separate process on a tiny random checkpoint and
-check it over HTTP, exactly as CI does. `pre-commit install` enables the same checks (plus a guard against committing
-large files such as checkpoints) before each commit.
-
-## CI/CD (GitHub Actions)
-
-```
-pull request ──▶ ci.yml:  Lint ─▶ Tests and model smoke test ─▶ Docker build and container smoke test
-                          (all three are required checks; main accepts changes only through pull requests)
-
-merge to main ─▶ cd.yml:  CI again ─▶ build + push images (tag = git SHA)
-                 ─▶ staging:     new revision at 0% ─▶ smoke test ─▶ 100% ─▶ smoke test ─▶ UI
-                 ─▶ manual approval
-                 ─▶ production:  new revision at 0% ─▶ smoke test ─▶ 10% canary, 5 min ─▶ 100% ─▶ smoke test ─▶ UI
-                    (any failure = 100% of traffic back on the previous revision)
-```
-
-| Workflow | What it does |
-|---|---|
-| `.github/workflows/ci.yml` | On every pull request: `ruff check` and `ruff format --check`; the unit tests; the model smoke tests; then builds the `api` and `ui` images, has the `api` image generate a tiny model, starts the container and runs the HTTP smoke test against it (including that `/info` reports the commit being tested). Image sizes go to the job summary. |
-| `.github/workflows/cd.yml` | On every merge to `main`: re-runs CI on the merged commit, pushes `ghcr.io/anshbhavsar1654/en-gu-api` and `en-gu-ui` tagged with the git SHA (and `main`), copies both to Artifact Registry, then rolls out to staging and, after approval, to production. |
-| `.github/workflows/deploy.yml` | Reusable progressive rollout of one API image to one Cloud Run service, then the UI pointed at it (see [Cloud deployment](#cloud-deployment-cloud-run)). |
-
-CI never needs the 122 MB model or the corpus: `python -m en_gu make-tiny-model` builds a tiny random checkpoint in the
-real format in a few seconds, so the loader, tokenizer, beam search and API are all exercised. The translations are
-meaningless; the real model's quality is checked by the promotion gate, not by CI.
-
-**Smoke test.** `en_gu/smoke.py` uses only the standard library, so it runs anywhere:
-
-```bash
-python -m en_gu smoke-test --url http://127.0.0.1:8000                    # any running API
-PYTHONPATH=src python -m en_gu.smoke --url https://… --expect-build <git sha> --no-feedback
-```
-
-It checks `/health`, waits for `/ready`, compares `/info`'s `build` with the expected commit (the image gets it from
-`--build-arg GIT_SHA`), sends a two-sentence translation and checks the request id and version headers, checks that
-bad input gets 422, stores a thumbs-up (skipped with `--no-feedback`, as in production) and reads `/metrics`. It prints
-one line per check and exits 1 if any check fails.
-
-**One-time setup** (both scripts are idempotent):
-
-1. `bash scripts/setup_github.sh`: branch protection on `main` (pull requests only, the three CI checks required, no
-   force pushes, admins included) and the `staging` and `production` environments, with you as the required reviewer
-   for production. Run it after CI has run once, so GitHub knows the check names.
-2. `PROJECT_ID=<gcp-project> BILLING_ACCOUNT=<id> bash scripts/setup_gcp_cicd.sh`: Artifact Registry repository, a
-   deployer service account with only `run.admin` and `artifactregistry.writer`, and Workload Identity Federation that
-   trusts only this repository, so **no cloud key is stored in GitHub**. With `BILLING_ACCOUNT` (from
-   `gcloud billing accounts list`) it also creates a monthly budget (`BUDGET_USD`, default 5) with e-mail alerts at
-   50/90/100%; with `MODEL_BUCKET` a private bucket for the model. It sets the repository variables `GCP_PROJECT_ID`,
-   `GCP_REGION`, `GCP_AR_REPO`, `GCP_WIF_PROVIDER`, `GCP_DEPLOY_SA` (and `GCP_MODEL_BUCKET`).
-
-Until the GCP variables exist, CD stops after publishing the images to GHCR and says so in the run summary.
-
-## Cloud deployment (Cloud Run)
-
-Four Cloud Run services, all scale-to-zero and capped at 2 instances: `en-gu-api-staging`, `en-gu-ui-staging`,
-`en-gu-api` and `en-gu-ui` (production). Each UI is the Streamlit image with `EN_GU_API_URL` pointing at its API.
-Operating them (rollback, failed deploys, canary, budget alert) is in [RUNBOOKS.md](RUNBOOKS.md).
-
-**Revision-based rollout** (`.github/workflows/deploy.yml`):
-
-1. Note the revision serving traffic now.
-2. Deploy the new image as revision `<service>-<sha7>-<run id>-<attempt>` with **0% traffic** and the tag
-   `candidate`, which gives it its own URL (`https://candidate---<service host>`).
-3. Smoke-test that URL: users can't reach the revision yet.
-4. Production only: tag the old revision `stable` and give the new one **10% of traffic for 5 minutes**. During the
-   window `python -m en_gu canary` sends a translation every 5 s to both tag URLs and fails if the new revision's
-   error rate is above 2% or its p95 is above max(1.5 × stable p95, stable p95 + 250 ms).
-5. Promote to 100% and smoke-test the public URL.
-6. Deploy the UI. A failed UI deploy doesn't touch the API.
-
-A failure in steps 2–5 sends 100% of traffic back to the revision from step 1. Rolling back by hand is
-`SERVICE=en-gu-api bash scripts/rollback.sh` (see the runbook; target under 2 minutes).
-
-**Sizing** (API): 1 vCPU, 2 GiB, startup CPU boost, concurrency 4, request timeout 60 s. Translations run one at a
-time per instance, so concurrency only lets a few requests queue instead of starting a new instance for each. A
-**startup probe on `/ready`** (every 3 s, up to 240 s) keeps Cloud Run from routing requests to an instance before its
-model is loaded: a request that arrives during a cold start waits instead of getting a 503. Liveness is `/health`.
-These values are a starting point; concurrency and timeout get revisited with load-test numbers (Phase 7).
-
-**Model delivery**, set with the repository variable `EN_GU_MODEL_DELIVERY`:
-
-| Value | How the model gets into the container | Cold start (first request after idle) |
-|---|---|---|
-| `hub` (default) | Downloaded from the Hugging Face repo at startup | not measured yet |
-| `gcs` | Read from a private Cloud Storage bucket mounted at `/models` (needs `GCP_MODEL_BUCKET`, `make upload-model-gcs`) | not measured yet |
-| `baked` | Built into the image (`api-baked` target); CD downloads it while building | not measured yet |
-
-`python -m en_gu cold-start --url <api-url>` measures it: it waits for the service to scale to zero, times the first
-translation, and uses `/info` (`instance`, `uptime_seconds`, `load_seconds`, `revision`) to confirm that a fresh
-instance answered. The table gets filled in from staging measurements.
-
-Other optional repository variables: `STAGING_SERVICE` / `PRODUCTION_SERVICE` / `STAGING_UI_SERVICE` /
-`PRODUCTION_UI_SERVICE` (service names), `CANARY_PERCENT` (10), `CANARY_MINUTES` (5), `CANARY_MAX_ERROR_RATE`
-(0.02), `CANARY_MAX_P95_RATIO` (1.5).
-
-**Cost.** Scale-to-zero plus the 2-instance caps keep a portfolio-level load inside the Cloud Run free tier; the
-budget alert is the safety net. Keeping an instance warm would remove cold starts but is billed around the clock.
-
-## Publish the model to Hugging Face (optional)
-
-```bash
-python upload_model.py
-```
-
-Uploads `best.pt` to the repo named in the script and asks for your token. Don't commit the token.
-
-## Project layout
-
-```
-app.py                   Streamlit front end (client of the API, or STANDALONE=1)
-src/en_gu/               Package: model.py (Transformer, decoding, loader), data.py, tokenizer.py,
-                         train.py, evaluate.py, export.py, config.py, cli.py,
-                         tracking.py, registry.py, gate.py, promote.py, backfill.py,
-                         api.py, serving.py, feedback.py, metrics.py, textutils.py,
-                         smoke.py (HTTP smoke test), tinymodel.py (tiny random model for tests and CI),
-                         canary.py (canary probe), coldstart.py (cold-start measurement)
-configs/                 base.yaml (run 1 hyperparameters), smoke.yaml (tiny CPU run), serve.yaml (API)
-Dockerfile               Targets: api, api-baked, ui
-docker-compose.yml       Local stack: API + UI
-.github/workflows/       ci.yml (pull requests), cd.yml (main -> staging -> production), deploy.yml (rollout)
-scripts/                 One-time setup: setup_github.sh (branch protection, environments), setup_gcp_cicd.sh
-                         (GCP, budget, model bucket); rollback.sh (Cloud Run traffic rollback)
-RUNBOOKS.md              Operating the deployed service: rollback, failed deploys, canary, cold starts, budget
-tests/                   pytest suite
-notebooks/kaggle_runner.ipynb    Thin notebook that runs the pipeline on Kaggle
-notebooks/archive/       Run 1 notebook with its training log
-dvc.yaml                 The pipeline as DVC stages
-MODEL_CARD.md            Intended use, data, evaluation caveats and limitations
-upload_model.py          Push best.pt to Hugging Face
-pyproject.toml  Makefile  .pre-commit-config.yaml  requirements.txt
-```
-
-`gujarati-english-translation.v1-backup.ipynb` and `transformer_en_gu.pth` are the earlier 4-layer, word-level v1 and
-are not used by the app.
-
-## Limitations
-
-- Trained on a subset of the corpus; quality is limited (see Results).
-- The corpus is web-mined, so translations lean towards news and general web text and may handle domain-specific or
-  informal language poorly.
-- Inputs are translated sentence by sentence, so cross-sentence context is not used.
-- CPU inference is slow for long text and large beams.
-
-## License
-
-MIT
-
+Run `backfill-run1` once to register the published checkpoint. Remove `--dry-run` to allow promotion when the gate passes.
 
 ## Monitoring
 
-The API records system metrics at `/metrics` and writes structured translation and feedback events to stdout.
-The monitoring stack includes Prometheus rules and Grafana dashboards for service health, input drift,
-output quality, and model versions. See the [operator runbook](RUNBOOKS.md#monitoring) for investigation
-and rollback steps.
-
-On a machine with the checkpoint at `models/best.pt`, start the local dashboards and generate an example report.
+Start the Compose monitoring profile for [Grafana](http://localhost:3000) and [Prometheus](http://localhost:9090).
+The commands below generate an Evidently drift report from simulated traffic and run the fixed 200-pair quality canary.
 
 ```bash
-python -m pip install -e '.[api,monitor]'
+mkdir -p artifacts/monitoring
 docker compose --profile monitoring up -d --build
-python scripts/simulate_traffic.py --profile normal --count 100
+python -m pip install -e ".[api,monitor]"
 python scripts/simulate_traffic.py --profile long --count 100
 docker compose logs --no-log-prefix api > artifacts/monitoring/traffic.log
 python -m en_gu.drift report --logs artifacts/monitoring/traffic.log --include-simulated
 python -m en_gu.quality_canary --url http://localhost:8000 --min-chrf 43.44758119227103
 ```
 
-Grafana is at `http://localhost:3000` and Prometheus is at `http://localhost:9090`. Grafana starts with
-the local `admin` / `admin` login. The drift command writes Evidently HTML for the 24-hour and 7-day
-windows when enough data is present. It requires 100 translations per window by default. The persistent
-drift alert requires two consecutive shifted 24-hour windows. Demo profiles are simulated traffic
-and include long paragraphs, code mixing, non-English inputs, and news or conversational language.
-Production drift reports exclude the simulator, quality canary, and smoke tests.
+Telemetry uses aggregate statistics and a keyed input hash. Raw translation text is kept only when a user submits
+a correction, with a default 90-day retention period. Feedback storage is local to each Cloud Run instance.
+[Golden-set baseline](monitoring/golden-baseline.json) · [Monitoring runbook](RUNBOOKS.md#monitoring)
 
-The drift reference uses statistics from 500 frozen validation inputs and the champion tokenizer.
-The input report uses Kolmogorov–Smirnov tests for lengths and PSI for the other measured input features.
-Output statistics are quality proxies. Language identification is heuristic, and the model's mean token
-log probability measures its own confidence. The 200-pair canary uses fixed validation examples and
-calls the serving API at beam 5. The existing checkpoint scored **21.42 BLEU** and **43.95 chrF++**
-through the local API; the initial chrF++ alert floor is **43.45**. See
-[golden-baseline.json](monitoring/golden-baseline.json) for the exact values and model identifier.
+## CI and deployment
 
-Monitoring events contain aggregate features, model and revision labels, and an HMAC of the
-input. The default key is random per API process. Set `EN_GU_TELEMETRY_HASH_KEY` through a secret
-only if hashes must match across instances. Raw text is kept in the feedback database only when the
-user submits a correction. The API prunes that database at startup, hourly while running, and on writes.
-The default retention is 90 days. Cloud Run instances have independent, ephemeral SQLite storage.
+GitHub Actions runs lint, tests, and a container smoke test, then publishes images from `main`. With Google Cloud
+configured, CD deploys to staging and then to production after approval. Production uses a tagged canary and restores
+the prior revision if rollout checks fail. Cloud Run supports a Hub download, a Cloud Storage mount, or a baked
+checkpoint. [CI](.github/workflows/ci.yml) · [CD](.github/workflows/cd.yml) ·
+[GitHub setup](scripts/setup_github.sh) · [Google Cloud setup](scripts/setup_gcp_cicd.sh) · [Runbooks](RUNBOOKS.md)
 
-The [production monitoring workflow](.github/workflows/monitoring.yml) runs the canary and drift report
-daily after cloud setup. Cloud Run's built-in metrics cover fleet request rates, latency, CPU, memory,
-and startup. The workflow can send daily quality and drift statistics to Grafana Cloud, while reports
-are retained as workflow artifacts for 30 days.
+## License
+
+MIT
