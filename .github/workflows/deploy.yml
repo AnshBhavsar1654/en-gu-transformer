@@ -62,6 +62,9 @@ jobs:
     name: Deploy to ${{ inputs.environment }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    concurrency:
+      group: cloud-run-${{ inputs.service }}
+      cancel-in-progress: false
     environment:
       name: ${{ inputs.environment }}
       url: ${{ steps.ui.outputs.url || steps.deploy.outputs.url }}
@@ -76,6 +79,7 @@ jobs:
       # baked = the image already contains it (cd.yml then builds the api-baked target)
       MODEL_DELIVERY: ${{ vars.EN_GU_MODEL_DELIVERY || 'hub' }}
       MODEL_BUCKET: ${{ vars.GCP_MODEL_BUCKET }}
+      SHADOW_URL: ${{ vars.EN_GU_SHADOW_URL }}
       PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
@@ -104,17 +108,28 @@ jobs:
           revision="${SERVICE}-${suffix}"
 
           case "$MODEL_DELIVERY" in
-            hub)   model=(--set-env-vars "EN_GU_MODEL_SOURCE=hub"
-                          --clear-volumes --clear-volume-mounts) ;;
-            baked) model=(--set-env-vars "EN_GU_MODEL_SOURCE=path,EN_GU_MODEL_PATH=/models/best.pt"
-                          --clear-volumes --clear-volume-mounts) ;;
+            hub)   model_env="EN_GU_MODEL_SOURCE=hub"
+                   model=(--clear-volumes --clear-volume-mounts) ;;
+            baked) model_env="EN_GU_MODEL_SOURCE=path,EN_GU_MODEL_PATH=/models/best.pt"
+                   model=(--clear-volumes --clear-volume-mounts) ;;
             gcs)   : "${MODEL_BUCKET:?set the GCP_MODEL_BUCKET repository variable for EN_GU_MODEL_DELIVERY=gcs}"
-                   model=(--set-env-vars "EN_GU_MODEL_SOURCE=path,EN_GU_MODEL_PATH=/models/best.pt"
-                          --execution-environment gen2 --clear-volumes --clear-volume-mounts
+                   path=/models/best.pt
+                   if [ -n "${{ steps.before.outputs.revision }}" ]; then
+                     current=$(gcloud run revisions describe "${{ steps.before.outputs.revision }}" --region "$REGION" \
+                       --format=json | jq -r '.spec.containers[0].env[]? | select(.name == "EN_GU_MODEL_PATH") | .value')
+                     if [[ "$current" =~ ^/models/releases/[0-9a-f]{64}/best\.pt$ ]]; then path="$current"; fi
+                   fi
+                   model_env="EN_GU_MODEL_SOURCE=path,EN_GU_MODEL_PATH=$path"
+                   model=(--execution-environment gen2 --clear-volumes --clear-volume-mounts
                           --add-volume "name=models,type=cloud-storage,bucket=${MODEL_BUCKET},readonly=true"
                           --add-volume-mount "volume=models,mount-path=/models") ;;
             *)     echo "::error::Unknown EN_GU_MODEL_DELIVERY '$MODEL_DELIVERY' (hub | gcs | baked)"; exit 1 ;;
           esac
+          shadow=()
+          if [[ "${{ inputs.environment }}" == production && -n "$SHADOW_URL" ]]; then
+            shadow=(--no-cpu-throttling)
+            model_env="$model_env,EN_GU_SHADOW_URL=$SHADOW_URL"
+          fi
           if [ -n "${{ steps.before.outputs.revision }}" ]; then
             traffic=(--no-traffic --tag candidate)
           else
@@ -135,6 +150,8 @@ jobs:
             --startup-probe "httpGet.path=/ready,httpGet.port=8000,initialDelaySeconds=0,timeoutSeconds=2,periodSeconds=3,failureThreshold=80" \
             --liveness-probe "httpGet.path=/health,httpGet.port=8000,periodSeconds=30,timeoutSeconds=5,failureThreshold=3" \
             "${model[@]}" \
+            "${shadow[@]}" \
+            --set-env-vars "$model_env" \
             --labels "commit-sha=${GITHUB_SHA},environment=${{ inputs.environment }},model-delivery=${MODEL_DELIVERY}" \
             --allow-unauthenticated \
             "${traffic[@]}" \

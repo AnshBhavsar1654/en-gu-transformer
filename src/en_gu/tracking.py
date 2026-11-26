@@ -52,7 +52,7 @@ def configure(cfg):
     client = MlflowClient()
     experiment = client.get_experiment_by_name(tcfg["experiment"])
     if experiment is None:
-        location = Path(tcfg["artifact_root"]).resolve().as_uri()
+        location = Path(tcfg["artifact_root"]).resolve().as_uri() if uri.startswith(("sqlite:///", "file:")) else None
         return client, client.create_experiment(tcfg["experiment"], artifact_location=location)
     return client, experiment.experiment_id
 

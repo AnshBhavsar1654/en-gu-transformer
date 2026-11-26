@@ -109,6 +109,26 @@ def test_better_candidate_replaces_the_champion_and_the_old_one_is_kept_for_roll
     assert registry.rollback(lab.cfg).version == 1 and lab.champion_version() == 1
 
 
+def test_model_release_requires_matching_checks_and_retains_the_previous_champion(lab):
+    from en_gu.release import finalize
+
+    promote_module.promote(lab.cfg, lab.candidate(1, 40.0))
+    for seed, score in [(2, 41.0), (3, 42.0)]:
+        gate = promote_module.promote(lab.cfg, lab.candidate(seed, score), stage_candidate=True)
+        assert gate["passed"] and not gate["promoted"] and lab.champion_version() == seed - 1
+        evidence = {"ok": True, "stable_version": f"v{seed - 1}", "candidate_version": f"v{seed}"}
+        golden = {"passed": True, "model_version": f"v{seed}", "revision": f"new-{seed}"}
+        traffic = {"ok": True, "candidate_revision": f"new-{seed}"}
+        with pytest.raises(ValueError, match="canary"):
+            finalize(lab.cfg, gate, evidence, {**evidence, "ok": False}, golden, traffic)
+        assert lab.champion_version() == seed - 1
+        finalize(lab.cfg, gate, evidence, evidence, golden, traffic)
+        assert lab.champion_version() == seed
+        assert registry.get_by_alias(lab.cfg, registry.PREVIOUS).version == seed - 1
+    rejected = promote_module.promote(lab.cfg, lab.candidate(4, 30.0), stage_candidate=True)
+    assert not rejected["passed"] and lab.champion_version() == 3
+
+
 def test_one_bad_length_bucket_blocks_an_otherwise_better_model(lab):
     promote_module.promote(lab.cfg, lab.candidate(1, 40.0))
     lopsided = lab.candidate(2, 42.0, slices={"short": 46.0, "medium": 42.0, "long": 36.0})

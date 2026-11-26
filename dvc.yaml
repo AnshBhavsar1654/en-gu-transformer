@@ -7,16 +7,18 @@ stages:
     deps:
       - en-gu/train.en
       - en-gu/train.gu
+      - data/reviewed
+      - data/eval
       - src/en_gu/data.py
       - src/en_gu/prepare.py
+      - src/en_gu/reviewed.py
     params:
       - configs/base.yaml:
           - seed
           - data
+          - paths.reviewed_pairs
     outs:
       - data/processed
-      - data/eval:
-          persist: true   # an existing eval set is reused, never regenerated: every model is scored on the same sentences
 
   tokenizer:
     cmd: python -m en_gu tokenizer

@@ -5,7 +5,8 @@ hf_token.txt
 transformer_en_gu.pth
 best.pt
 # Local pipeline outputs, caches and planning docs
-docs/
+docs/*
+!docs/changes/
 data/processed/
 artifacts/
 .pytest_cache/
@@ -18,3 +19,4 @@ mlflow.db
 mlartifacts/
 models/
 data/feedback/
+data/reviewed/*.jsonl

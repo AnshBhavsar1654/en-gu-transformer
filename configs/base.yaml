@@ -8,6 +8,7 @@ paths:
   corpus_dir: en-gu               # folder with train.en / train.gu
   processed_dir: data/processed   # cleaned training set (generated)
   eval_dir: data/eval             # frozen validation + test sets
+  reviewed_pairs: data/reviewed/accepted.jsonl  # optional, private, DVC-versioned
   artifacts_dir: artifacts        # tokenizer, checkpoints, metrics, exported best.pt
 
 data:

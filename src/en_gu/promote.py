@@ -14,6 +14,7 @@ from en_gu.checkpoint import embedded_metrics
 from en_gu.config import artifact_path
 from en_gu.data import eval_fingerprint, load_eval_set, sha256_file
 from en_gu.evaluate import score_translations
+from en_gu.files import atomic_write
 from en_gu.gate import LIKE_FOR_LIKE, REFERENCE, decide, format_report, measure_latency, slice_metrics
 from en_gu.model import load_for_inference, translate
 
@@ -95,7 +96,15 @@ def _training_run(cfg, sha):
 
 
 def promote(
-    cfg, candidate=None, *, beam_size=None, limit=None, dry_run=False, with_latency=True, assume_isolated=False
+    cfg,
+    candidate=None,
+    *,
+    beam_size=None,
+    limit=None,
+    dry_run=False,
+    with_latency=True,
+    assume_isolated=False,
+    stage_candidate=False,
 ):
     candidate = Path(candidate) if candidate else artifact_path(cfg, "best.pt")
     beam_size = beam_size or cfg["evaluate"]["beam_size"]
@@ -133,13 +142,13 @@ def promote(
         "beam_size": beam_size,
         "eval_sha256": eval_sha256,
         "dry_run": dry_run,
+        "promoted": False,
+        "version": None,
     }
     print(format_report(report))
     report_path = artifact_path(cfg, "gate", "report.json")
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    atomic_write(report_path, json.dumps(report, indent=2).encode())
 
-    report["promoted"], report["version"] = False, None
     if dry_run:
         print(
             "Dry run: the registry was not changed." + (" (--limit scores only part of the test set.)" if limit else "")
@@ -176,7 +185,13 @@ def promote(
             cfg, candidate, run_name=f"import-{sha[:8]}", tags={"source": "external", **tags}
         )
         version = registry.register_version(cfg, run_id, tags=tags)
-    registry.make_champion(cfg, version.version)
-    print(f"Promoted: version {version.version} is now the champion.")
-    report["promoted"], report["version"] = True, int(version.version)
+    report["version"] = int(version.version)
+    if stage_candidate:
+        registry.set_alias(cfg, registry.CANDIDATE, version.version)
+        print(f"Staged version {version.version} for shadow and canary checks.")
+    else:
+        registry.make_champion(cfg, version.version)
+        print(f"Promoted: version {version.version} is now the champion.")
+        report["promoted"] = True
+    atomic_write(report_path, json.dumps(report, indent=2).encode())
     return report
