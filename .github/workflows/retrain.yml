@@ -1,0 +1,71 @@
+name: Review model retraining
+
+on:
+  schedule:
+    - cron: '0 8 1 * *'
+  workflow_dispatch:
+    inputs:
+      reviewed_pairs:
+        description: Number of newly accepted pairs in the DVC batch (0 requests manual review)
+        type: number
+        default: 0
+  workflow_run:
+    workflows: [Production monitoring]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: retraining-review
+
+jobs:
+  review:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_branch == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether retraining needs review
+        id: trigger
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          PAIR_COUNT: ${{ inputs.reviewed_pairs || '0' }}
+          MIN_PAIRS: ${{ vars.RETRAIN_REVIEWED_MIN || '100' }}
+        run: |
+          case "$GITHUB_EVENT_NAME" in
+            workflow_run)
+              if ! gh run download "$RUN_ID" -R "$GITHUB_REPOSITORY" -n translation-drift-report -D "$RUNNER_TEMP/drift"; then
+                exit 0
+              fi
+              jq -e '.alert == true' "$RUNNER_TEMP/drift/drift.json" >/dev/null || exit 0
+              reason="Persistent input drift in monitoring run $RUN_ID."
+              ;;
+            schedule) reason="Monthly model review." ;;
+            workflow_dispatch)
+              [[ "$PAIR_COUNT" =~ ^[0-9]+$ && "$MIN_PAIRS" =~ ^[1-9][0-9]*$ ]]
+              if [[ "$PAIR_COUNT" == 0 ]]; then
+                reason="Manual model review."
+              elif (( PAIR_COUNT >= MIN_PAIRS )); then
+                reason="$PAIR_COUNT newly reviewed corrections are ready for training."
+              else
+                exit 0
+              fi
+              ;;
+          esac
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+      - name: Open one retraining review
+        if: steps.trigger.outputs.reason != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_REASON: ${{ steps.trigger.outputs.reason }}
+        run: |
+          title='Model retraining review'
+          existing=$(gh issue list -R "$GITHUB_REPOSITORY" --search '"Model retraining review" in:title' --state open \
+            --json title --jq '[.[] | select(.title == "Model retraining review")] | length')
+          if [[ "$existing" == 0 ]]; then
+            printf '%s\n\nRead the retraining runbook for data review, GPU training, and candidate submission.\n' \
+              "$REVIEW_REASON" > "$RUNNER_TEMP/review.md"
+            gh issue create -R "$GITHUB_REPOSITORY" --title "$title" --body-file "$RUNNER_TEMP/review.md"
+          fi

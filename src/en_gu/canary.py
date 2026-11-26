@@ -20,8 +20,10 @@ import sys
 import time
 import urllib.error
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 
+from en_gu.files import atomic_write
 from en_gu.smoke import request
 
 # Short everyday sentences of different lengths: enough to exercise beam search without slowing the window down
@@ -121,12 +123,12 @@ def evaluate(candidate, baseline=None, thresholds=None):
     return Verdict(not reasons, cand, base, reasons)
 
 
-def probe(base_url, sentence, beam_size=5, timeout=30):
+def probe(base_url, sentence, beam_size=5, timeout=30, expected_version=None):
     """One translation request; a non-200 answer, a body without a translation or a network error is a failure."""
     start = time.perf_counter()
     rid = f"canary-{uuid.uuid4().hex[:12]}"
     try:
-        status, _, body = request(
+        status, headers, body = request(
             base_url,
             "POST",
             "/translate",
@@ -139,6 +141,8 @@ def probe(base_url, sentence, beam_size=5, timeout=30):
     latency_ms = (time.perf_counter() - start) * 1000
     if status != 200:
         return Probe(False, latency_ms, status, body[:200])
+    if expected_version is not None and headers.get("X-Model-Version") != expected_version:
+        return Probe(False, latency_ms, status, "unexpected model version")
     try:
         translation = json.loads(body).get("translation")
     except (ValueError, AttributeError):
@@ -148,7 +152,18 @@ def probe(base_url, sentence, beam_size=5, timeout=30):
     return Probe(True, latency_ms, status)
 
 
-def run_canary(url, baseline_url=None, minutes=5.0, interval=5.0, beam_size=5, thresholds=None, out=print):
+def run_canary(
+    url,
+    baseline_url=None,
+    minutes=5.0,
+    interval=5.0,
+    beam_size=5,
+    thresholds=None,
+    out=print,
+    *,
+    expected_version=None,
+    stable_version=None,
+):
     """Probe for `minutes`, then evaluate. Requests to the two revisions alternate so both see the same load."""
     candidate, baseline = [], []
     deadline = time.monotonic() + minutes * 60
@@ -156,17 +171,24 @@ def run_canary(url, baseline_url=None, minutes=5.0, interval=5.0, beam_size=5, t
     out(f"Canary: probing {url}" + (f" against {baseline_url}" if baseline_url else "") + f" for {minutes:g} min")
     while True:
         sentence = CANARY_SENTENCES[i % len(CANARY_SENTENCES)]
-        result = probe(url, sentence, beam_size)
+        options = {"expected_version": expected_version} if expected_version else {}
+        result = probe(url, sentence, beam_size, **options)
         candidate.append(result)
         if not result.ok:
             out(f"  new revision failed: status {result.status} {result.error}")
         if baseline_url:
-            baseline.append(probe(baseline_url, sentence, beam_size))
+            options = {"expected_version": stable_version} if stable_version else {}
+            baseline.append(probe(baseline_url, sentence, beam_size, **options))
         i += 1
         if time.monotonic() + interval > deadline:
             break
         time.sleep(interval)
     verdict = evaluate(candidate, baseline or None, thresholds)
+    if stable_version and (
+        verdict.baseline is None or verdict.baseline.error_rate > (thresholds or Thresholds()).max_error_rate
+    ):
+        verdict.reasons.append("the stable revision failed the version or error-rate check")
+        verdict.ok = False
     out(f"  new revision:    {verdict.candidate.line()}")
     if verdict.baseline:
         out(f"  stable revision: {verdict.baseline.line()}")
@@ -209,6 +231,9 @@ def build_parser(parser=None):
     parser.add_argument("--p95-slack-ms", type=float, default=t.p95_slack_ms)
     parser.add_argument("--max-p95-ms", type=float, default=None, help="absolute p95 ceiling (optional)")
     parser.add_argument("--min-requests", type=int, default=t.min_requests)
+    parser.add_argument("--expect-version")
+    parser.add_argument("--stable-version")
+    parser.add_argument("--out", type=Path)
     return parser
 
 
@@ -216,7 +241,19 @@ def run_from_args(args):
     thresholds = Thresholds(
         args.max_error_rate, args.max_p95_ratio, args.p95_slack_ms, args.max_p95_ms, args.min_requests
     )
-    verdict = run_canary(args.url, args.baseline_url, args.minutes, args.interval, args.beam_size, thresholds)
+    verdict = run_canary(
+        args.url,
+        args.baseline_url,
+        args.minutes,
+        args.interval,
+        args.beam_size,
+        thresholds,
+        expected_version=args.expect_version,
+        stable_version=args.stable_version,
+    )
+    if args.out:
+        details = {**asdict(verdict), "candidate_version": args.expect_version, "stable_version": args.stable_version}
+        atomic_write(args.out, json.dumps(details, indent=2).encode())
     return 0 if verdict.ok else 1
 
 

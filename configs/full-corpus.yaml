@@ -1,0 +1,3 @@
+# Layer over configs/base.yaml to use all available corpus pairs.
+data:
+  max_sentences: null

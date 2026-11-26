@@ -1,0 +1,90 @@
+name: Release translation model
+
+on:
+  workflow_dispatch:
+    inputs:
+      checkpoint_sha256:
+        description: SHA-256 of an approved checkpoint uploaded under incoming/<sha256>/best.pt
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+jobs:
+  release:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    environment: production
+    concurrency:
+      group: cloud-run-${{ vars.PRODUCTION_SERVICE || 'en-gu-api' }}
+      cancel-in-progress: false
+    env:
+      PROJECT: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+      SERVICE: ${{ vars.PRODUCTION_SERVICE || 'en-gu-api' }}
+      MODEL_BUCKET: ${{ vars.GCP_MODEL_BUCKET }}
+      SHADOW_SERVICE: ${{ vars.EN_GU_SHADOW_SERVICE }}
+      SHADOW_MINUTES: ${{ vars.SHADOW_MINUTES || '15' }}
+      SHADOW_MIN_REQUESTS: ${{ vars.SHADOW_MIN_REQUESTS || '20' }}
+      CANARY_MINUTES: ${{ vars.CANARY_MINUTES || '5' }}
+      CANARY_MIN_REAL_REQUESTS: ${{ vars.CANARY_MIN_REAL_REQUESTS || '10' }}
+      MLFLOW_TRACKING_URI: ${{ vars.MLFLOW_TRACKING_URI }}
+      MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN }}
+      CHECKPOINT_SHA: ${{ inputs.checkpoint_sha256 }}
+      PYTHONPATH: src
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Install gate dependencies
+        run: |
+          pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
+          pip install -e '.[api,train,tracking]'
+      - name: Evaluate and stage the checkpoint
+        id: gate
+        run: |
+          [[ "$CHECKPOINT_SHA" =~ ^[0-9a-f]{64}$ ]]
+          : "${MODEL_BUCKET:?}" "${MLFLOW_TRACKING_URI:?}"
+          mkdir -p artifacts/release
+          gcloud storage cp "gs://$MODEL_BUCKET/incoming/$CHECKPOINT_SHA/best.pt" artifacts/release/input.pt
+          printf '%s  %s\n' "$CHECKPOINT_SHA" artifacts/release/input.pt | sha256sum --check
+          python -m en_gu promote --candidate artifacts/release/input.pt --stage-candidate \
+            --set paths.artifacts_dir=artifacts/release --set "tracking.uri=$MLFLOW_TRACKING_URI"
+          python -m en_gu fetch-model --alias candidate --out artifacts/release/best.pt \
+            --set paths.artifacts_dir=artifacts/release --set "tracking.uri=$MLFLOW_TRACKING_URI"
+          printf '%s  %s\n' "$CHECKPOINT_SHA" artifacts/release/best.pt | sha256sum --check
+      - name: Run shadow, golden, and canary checks and promote
+        run: bash scripts/release_model.sh
+      - name: Upload the release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-release-evidence
+          path: |
+            artifacts/release/gate/report.json
+            artifacts/release/shadow.json
+            artifacts/release/golden.json
+            artifacts/release/canary.json
+            artifacts/release/traffic.json
+          retention-days: 30
+      - name: Open a release review after rejection or failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf 'Release checks failed. Review the run summary and evidence.\n\n%s/%s/actions/runs/%s\n' \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > "$RUNNER_TEMP/failure.md"
+          gh issue create --title "Model release needs review ($GITHUB_RUN_ID)" --body-file "$RUNNER_TEMP/failure.md"

@@ -34,6 +34,7 @@ from en_gu.config import load_config
 from en_gu.feedback import FeedbackStore
 from en_gu.metrics import ServiceMetrics
 from en_gu.serving import SERVE_CONFIGS, Translator, serve_settings
+from en_gu.shadow import ShadowSampler
 from en_gu.telemetry import emit, hash_input, language_factory
 from en_gu.textutils import split_sentences
 
@@ -41,6 +42,8 @@ log = logging.getLogger(__name__)
 REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 SYNTHETIC_AGENTS = {
     "en-gu-quality-canary": "canary",
+    "en-gu-canary": "canary",
+    "en-gu-shadow": "shadow",
     "en-gu-smoke-test": "smoke",
     "en-gu-simulated-traffic": "simulated",
 }
@@ -153,9 +156,12 @@ def create_app(cfg=None, translator=None, background=True):
         else:
             state.load(cfg, settings)
         cleanup = asyncio.create_task(purge_expired_feedback(feedback_store))
+        app.state.shadow = ShadowSampler.from_env()
         try:
             yield
         finally:
+            if app.state.shadow is not None:
+                app.state.shadow.close()
             cleanup.cancel()
             with suppress(asyncio.CancelledError):
                 await cleanup
@@ -239,6 +245,9 @@ def create_app(cfg=None, translator=None, background=True):
             key: value if value is not None and math.isfinite(value) else None for key, value in result.features.items()
         }
         metrics.observe_features({**features, "latency_seconds": result.latency_ms / 1000}, translator.version)
+        traffic = SYNTHETIC_AGENTS.get(request.headers.get("User-Agent"), "regular")
+        if traffic == "regular" and app.state.shadow is not None:
+            app.state.shadow.offer(text, beam, result, translator.version)
         emit(
             "translation",
             revision=revision,
@@ -246,7 +255,7 @@ def create_app(cfg=None, translator=None, background=True):
             input_hash=hash_input(text, hash_key),
             beam_size=beam,
             latency_ms=round(result.latency_ms, 1),
-            traffic=SYNTHETIC_AGENTS.get(request.headers.get("User-Agent"), "regular"),
+            traffic=traffic,
             **features,
         )
         return TranslateResponse(

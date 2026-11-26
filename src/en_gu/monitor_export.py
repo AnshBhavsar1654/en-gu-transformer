@@ -1,11 +1,11 @@
 """Publish scheduled monitoring results as JSON and Prometheus/Influx samples."""
 
 import json
-import os
-import tempfile
 from dataclasses import dataclass, field
 
 from prometheus_client import CollectorRegistry, Gauge, generate_latest
+
+from en_gu.files import atomic_write
 
 
 @dataclass
@@ -18,18 +18,6 @@ class Sample:
     @property
     def metric_name(self):
         return f"en_gu_{self.measurement}_{self.field}"
-
-
-def atomic_write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temp:
-        temp.write(content)
-    try:
-        os.chmod(temp.name, 0o644)
-        os.replace(temp.name, path)
-    finally:
-        if os.path.exists(temp.name):
-            os.unlink(temp.name)
 
 
 def escape_tag(value):

@@ -74,6 +74,9 @@ def build_parser():
     promote.add_argument("--beam", type=int, default=None, help="beam size to score with (default: evaluate.beam_size)")
     promote.add_argument("--limit", type=int, default=None, help="score only the first N test sentences (dry run)")
     promote.add_argument("--dry-run", action="store_true", help="show the verdict without touching the registry")
+    promote.add_argument(
+        "--stage-candidate", action="store_true", help="register a passing candidate without promoting"
+    )
     promote.add_argument("--no-latency", action="store_true", help="skip the latency comparison")
     promote.add_argument(
         "--assume-isolated",
@@ -160,6 +163,7 @@ def main(argv=None):
             dry_run=args.dry_run,
             with_latency=not args.no_latency,
             assume_isolated=args.assume_isolated,
+            stage_candidate=args.stage_candidate,
         )
         return 0 if report["passed"] else 1
     elif args.command == "registry":

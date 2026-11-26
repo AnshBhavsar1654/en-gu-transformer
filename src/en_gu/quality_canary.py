@@ -70,13 +70,16 @@ def main():
     parser.add_argument("--eval-dir", type=Path, default=Path("data/eval"))
     parser.add_argument("--out", type=Path, default=Path("artifacts/monitoring/golden"))
     parser.add_argument("--min-chrf", required=True, type=float)
+    parser.add_argument("--expect-version")
     args = parser.parse_args()
     if not 0 <= args.min_chrf <= 100:
         parser.error("--min-chrf must be between 0 and 100")
     outcome = {"min_chrf": args.min_chrf}
     try:
         outcome.update(score_endpoint(args.url, golden_pairs(args.eval_dir)))
-        outcome["passed"] = outcome["chrf"] >= args.min_chrf
+        outcome["passed"] = outcome["chrf"] >= args.min_chrf and (
+            args.expect_version is None or outcome["model_version"] == args.expect_version
+        )
     except Exception as exc:
         outcome.update(passed=False, error=str(exc))
 

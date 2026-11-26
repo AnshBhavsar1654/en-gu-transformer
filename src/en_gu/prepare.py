@@ -10,6 +10,7 @@ from en_gu.data import (
     write_eval_set,
     write_lines,
 )
+from en_gu.reviewed import validate_pairs
 
 
 def prepare(cfg):
@@ -26,6 +27,21 @@ def prepare(cfg):
         print(f"Reusing frozen eval set in {eval_dir} ({len(frozen[0][0])} val / {len(frozen[1][0])} test)")
 
     splits = split_pairs(en, gu, cfg["seed"], dcfg["val_size"], dcfg["test_size"], frozen=frozen)
+    reviewed = Path(paths["reviewed_pairs"]) if paths.get("reviewed_pairs") else None
+    if reviewed is not None and reviewed.exists():
+        rows, rejected = validate_pairs(reviewed, (splits["val"], splits["test"]), dcfg["max_words"])
+        if rejected:
+            raise ValueError(f"{reviewed} contains {len(rejected)} invalid reviewed pairs")
+        train_en, train_gu = splits["train"]
+        # Scan the corpus without materializing another full copy of it.
+        pending = {(row["source"], row["target"]) for row in rows}
+        pending.difference_update(zip(train_en, train_gu))
+        for row in rows:
+            pair = row["source"], row["target"]
+            if pair in pending:
+                train_en.append(pair[0])
+                train_gu.append(pair[1])
+        print(f"Added {len(pending)} reviewed corrections to training")
     if frozen is None:
         meta = {"seed": cfg["seed"], "max_sentences": dcfg["max_sentences"], "max_words": dcfg["max_words"]}
         write_eval_set(eval_dir, splits["val"], splits["test"], meta)

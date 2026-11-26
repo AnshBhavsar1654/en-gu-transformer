@@ -203,3 +203,62 @@ Check the scheduled workflow status, Cloud Logging permissions, endpoint readine
 export step. Re-dispatch **Production monitoring** after correcting the failing dependency. Locally,
 verify that both daily `.prom` files exist, the exporter can read them, and Prometheus has scraped
 the exporter. An empty traffic window can produce a fresh report without a drift score.
+
+## Retraining and model releases
+
+A monthly schedule, persistent drift report, or manual dispatch opens a retraining review. After a human has reviewed
+and approved corrections, export a private JSONL with string fields `source` and `target`. Use this command to normalize,
+validate, and append the approved rows.
+
+```bash
+python -m en_gu.reviewed private/approved.jsonl
+dvc add data/reviewed/accepted.jsonl
+```
+
+The validator checks script, length, duplicate sources, and overlap with either side of the frozen evaluation set.
+Commit only the DVC pointer, and push correction data to a private DVC remote. Use the printed `new_pairs` count
+when dispatching **Review model retraining**. The default threshold is 100 new pairs. A count of zero opens a manual
+review. The pipeline incorporates accepted rows after the base corpus cap and frozen-set exclusions.
+
+Run training from a GPU-enabled environment. Bring the same corpus and approved DVC snapshot into the existing
+Kaggle runner, or use the CLI directly.
+
+```bash
+python -m en_gu all --config configs/base.yaml --config configs/full-corpus.yaml
+```
+
+Use the base config alone to reproduce the one-million-pair setting. A candidate needs an exported self-contained
+checkpoint and the current evaluation fingerprint. Compare and stage it without changing the live registry alias.
+
+```bash
+python -m en_gu promote --candidate artifacts/best.pt --stage-candidate
+```
+
+### Production release configuration
+
+- Serve the registry champion from the existing GCS model mount at `/models`, including the checkpoint version
+  sidecar. Set `EN_GU_MODEL_DELIVERY=gcs` and `GCP_MODEL_BUCKET`. The release validates the current API model
+  version against the registry before changing traffic.
+- Provision a private Cloud Run shadow service with the same read-only GCS mount, startup probe, and runtime
+  configuration as the API. Grant the production runtime account `roles/run.invoker` on the shadow service.
+  Set `EN_GU_SHADOW_SERVICE` to its name and `EN_GU_SHADOW_URL` to its HTTPS origin, then deploy the API
+  with shadow sampling enabled. Sampling defaults to 5% and compares the first 512 characters of the outputs.
+  Request and response text stays in memory. Only aggregate comparisons and model labels reach logs.
+- Set `MLFLOW_TRACKING_URI` to the reachable registry and configure `MLFLOW_TRACKING_TOKEN` if needed. The release
+  identity needs permission to deploy Cloud Run revisions, read logs, and read and create model objects in the
+  configured bucket. The release uses the production GitHub environment approval.
+- Upload the trusted exported checkpoint as `gs://<bucket>/incoming/<sha256>/best.pt`, then dispatch **Release
+  translation model** with the SHA-256. The job verifies the digest, runs the full promotion gate, stages the
+  model, and records shadow and golden-set evidence before routing 10% to the tagged candidate.
+- The canary compares both tagged endpoints and Cloud Run request logs for the two revisions. Insufficient
+  samples or guard regressions stop the release. A clean result transfers all traffic and advances the registry
+  champion. The job uploads the reports, restores the previous revision after rollout failures, and opens a
+  review issue on rejection.
+
+For a manual rollback, restore the previous Cloud Run revision using the rollback procedure, verify the public API
+version, and run `python -m en_gu registry --rollback --set "tracking.uri=$MLFLOW_TRACKING_URI"` if the registry
+champion had advanced. Each timeline should record the code and data versions, checkpoint digest, and gate and
+rollout reports. The release jobs share their Cloud Run service lock with code deployments.
+
+Development checks cover registry transitions and compare fixture traffic locally. The production workflow requires
+a configured registry, model bucket, authenticated shadow service, and enough traffic to exercise both windows.

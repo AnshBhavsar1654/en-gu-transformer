@@ -39,10 +39,14 @@ class MultiHeadAttention(nn.Module):
         self.w_o = nn.Linear(d_model, d_model)
 
     def forward(self, query, memory, mask=None, is_causal=False):
+        return self.attend(query, *self.project_memory(memory), mask=mask, is_causal=is_causal)
+
+    def project_memory(self, memory):
+        return self.w_kv(memory).unflatten(-1, (2, self.num_heads, self.d_k)).permute(2, 0, 3, 1, 4)
+
+    def attend(self, query, k, v, mask=None, is_causal=False):
         batch_size, q_len, d_model = query.shape
-        k_len = memory.size(1)
         q = self.w_q(query).view(batch_size, q_len, self.num_heads, self.d_k).transpose(1, 2)
-        k, v = self.w_kv(memory).view(batch_size, k_len, 2, self.num_heads, self.d_k).permute(2, 0, 3, 1, 4)
         # Fused attention kernel (Flash / memory-efficient) when the GPU supports it
         out = F.scaled_dot_product_attention(
             q,
@@ -119,6 +123,7 @@ class Transformer(nn.Module):
         super().__init__()
         self.d_model = d_model
         self.max_len = max_len
+        self.use_kv_cache = False
         self.embed_scale = math.sqrt(d_model)
 
         # One joint EN+GU vocabulary, so a single embedding matrix is shared by the
@@ -170,6 +175,42 @@ class Transformer(nn.Module):
         return self.decode(tgt, memory, src_mask)
 
 
+class IncrementalDecoder:
+    """Inference-only state for one greedy or beam search batch."""
+
+    def __init__(self, model, memory, src_mask):
+        self.model = model
+        self.src_mask = src_mask
+        self.cross = [layer.cross_attention.project_memory(memory) for layer in model.decoder_layers]
+        self.self_kv = [None] * len(self.cross)
+
+    def logits(self, prefix):
+        token = prefix[:, -1:]
+        x = self.model.embedding(token) * self.model.embed_scale + self.model.pe[prefix.size(1) - 1]
+        for i, layer in enumerate(self.model.decoder_layers):
+            h = layer.norm1(x)
+            kv = layer.self_attention.project_memory(h)
+            if self.self_kv[i] is not None:
+                kv = torch.cat((self.self_kv[i], kv), dim=-2)
+            self.self_kv[i] = kv
+            x = x + layer.self_attention.attend(h, *kv)
+            x = x + layer.cross_attention.attend(layer.norm2(x), *self.cross[i], mask=self.src_mask)
+            x = x + layer.feed_forward(layer.norm3(x))
+        return self.model.output_proj(self.model.decoder_norm(x))[:, 0]
+
+    def reorder(self, beams):
+        # Cross projections and source mask are identical within each item's beams.
+        self.self_kv = [kv.index_select(1, beams) for kv in self.self_kv]
+
+
+def decoder_cache(model, memory, src_mask):
+    return (
+        IncrementalDecoder(model, memory, src_mask)
+        if getattr(model, "use_kv_cache", False) and not model.training
+        else None
+    )
+
+
 # ---------------------------------------------------------------------------
 # Decoding
 # ---------------------------------------------------------------------------
@@ -205,12 +246,13 @@ def _strip(ids):
 def greedy_decode(model, src, max_len_a=1.5, max_len_b=10, *, detailed=False):
     max_new = _max_new_tokens(model, src, max_len_a, max_len_b)
     memory, src_mask = model.encode(src)
+    cache = decoder_cache(model, memory, src_mask)
     ys = torch.full((src.size(0), 1), BOS_IDX, dtype=torch.long, device=src.device)
     finished = torch.zeros(src.size(0), dtype=torch.bool, device=src.device)
     if detailed:
         scores = torch.zeros(src.size(0), device=src.device)
     for _ in range(max_new):
-        logits = model.decode(ys, memory, src_mask)[:, -1]
+        logits = cache.logits(ys) if cache is not None else model.decode(ys, memory, src_mask)[:, -1]
         if detailed:
             logp = F.log_softmax(logits.float(), dim=-1)
         logits[:, BANNED_TOKENS] = float("-inf")
@@ -239,6 +281,7 @@ def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_
     memory, src_mask = model.encode(src)
     memory = memory.repeat_interleave(k, dim=0)
     src_mask = src_mask.repeat_interleave(k, dim=0)
+    cache = decoder_cache(model, memory, src_mask)
 
     seqs = torch.full((batch_size * k, 1), BOS_IDX, dtype=torch.long, device=device)
     scores = torch.full((batch_size, k), float("-inf"), device=device)
@@ -248,7 +291,8 @@ def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_
     done = [False] * batch_size
 
     for _ in range(max_new):
-        logits = model.decode(seqs, memory, src_mask)[:, -1].float()
+        logits = cache.logits(seqs) if cache is not None else model.decode(seqs, memory, src_mask)[:, -1]
+        logits = logits.float()
         logp = F.log_softmax(logits, dim=-1)
         logp[:, BANNED_TOKENS] = float("-inf")
         vocab = logp.size(-1)
@@ -283,6 +327,8 @@ def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_
             break
 
         select = (beam_offset + torch.tensor(next_beam, device=device)).view(-1)
+        if cache is not None:
+            cache.reorder(select)
         seqs = torch.cat([seqs[select], torch.tensor(next_tok, device=device).view(-1, 1)], dim=1)
         scores = torch.tensor(next_scores, device=device)
 
@@ -377,6 +423,7 @@ def load_for_inference(path, device="cpu", spm_path=None):
     if unexpected or set(missing) - {"output_proj.weight"}:
         raise RuntimeError(f"Checkpoint mismatch. Missing: {missing}, unexpected: {unexpected}")
     model.to(device).eval()
+    model.use_kv_cache = bool(ckpt.get("inference", {}).get("kv_cache", False))
 
     if "spm_model" in ckpt:
         sp = spm.SentencePieceProcessor(model_proto=ckpt["spm_model"].numpy().tobytes())

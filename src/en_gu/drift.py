@@ -11,7 +11,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from statistics import mean
 
-from en_gu.monitor_export import Sample, atomic_write, write_results
+from en_gu.files import atomic_write
+from en_gu.monitor_export import Sample, write_results
 
 # Each threshold is in the units of its test: p-value for KS, population stability index for PSI.
 TESTS = {
