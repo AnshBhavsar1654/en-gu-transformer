@@ -23,3 +23,12 @@ serve:
     max_correction_chars: 4000
   feedback_db: data/feedback/feedback.db   # SQLite file for /feedback (created on first use)
   feedback_retention_days: 90              # older feedback rows (and any text in them) are deleted
+  guardrails:
+    max_translate_body_bytes: 32768
+    max_feedback_body_bytes: 163840
+    translate_per_minute: 600
+    translate_burst: 24
+    feedback_per_minute: 60
+    feedback_burst: 12
+    max_queued_translations: 2
+    translation_timeout_seconds: 45

@@ -145,7 +145,7 @@ jobs:
             --revision-suffix "$suffix" \
             --port 8000 \
             --cpu 1 --memory 2Gi --cpu-boost \
-            --concurrency 4 --timeout 60 \
+            --concurrency 3 --timeout 60 \
             --min-instances 0 --max-instances 2 \
             --startup-probe "httpGet.path=/ready,httpGet.port=8000,initialDelaySeconds=0,timeoutSeconds=2,periodSeconds=3,failureThreshold=80" \
             --liveness-probe "httpGet.path=/health,httpGet.port=8000,periodSeconds=30,timeoutSeconds=5,failureThreshold=3" \

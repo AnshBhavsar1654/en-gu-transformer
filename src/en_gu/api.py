@@ -33,6 +33,7 @@ from en_gu import __version__
 from en_gu.config import load_config
 from en_gu.feedback import FeedbackStore
 from en_gu.metrics import ServiceMetrics
+from en_gu.request_limits import InferenceQueue, QueueFull, RequestLimits, request_budgets
 from en_gu.serving import SERVE_CONFIGS, Translator, serve_settings
 from en_gu.shadow import ShadowSampler
 from en_gu.telemetry import emit, hash_input, language_factory
@@ -44,6 +45,7 @@ SYNTHETIC_AGENTS = {
     "en-gu-quality-canary": "canary",
     "en-gu-canary": "canary",
     "en-gu-shadow": "shadow",
+    "en-gu-load-test": "load_test",
     "en-gu-smoke-test": "smoke",
     "en-gu-simulated-traffic": "simulated",
 }
@@ -122,6 +124,8 @@ class ServiceState:
 def _route(request):
     """The route template (e.g. /translate), or 'unmatched' for 404s, so random URLs don't create new series."""
     route = request.scope.get("route")
+    if route is None and request.method == "POST" and request.url.path in ("/translate", "/feedback"):
+        return request.url.path
     return getattr(route, "path", "unmatched")
 
 
@@ -135,6 +139,7 @@ def create_app(cfg=None, translator=None, background=True):
     cfg = cfg or default_config()
     settings = serve_settings(cfg)
     limits = settings["limits"]
+    guardrails = request_budgets(settings)
     revision = os.environ.get("K_REVISION") or "local"
     metrics = ServiceMetrics(revision)
     state = ServiceState(metrics)
@@ -155,11 +160,15 @@ def create_app(cfg=None, translator=None, background=True):
             threading.Thread(target=state.load, args=(cfg, settings), name="model-loader", daemon=True).start()
         else:
             state.load(cfg, settings)
-        cleanup = asyncio.create_task(purge_expired_feedback(feedback_store))
         app.state.shadow = ShadowSampler.from_env()
+        app.state.inference = InferenceQueue(
+            guardrails["max_queued_translations"], guardrails["translation_timeout_seconds"]
+        )
+        cleanup = asyncio.create_task(purge_expired_feedback(feedback_store))
         try:
             yield
         finally:
+            app.state.inference.close()
             if app.state.shadow is not None:
                 app.state.shadow.close()
             cleanup.cancel()
@@ -177,6 +186,7 @@ def create_app(cfg=None, translator=None, background=True):
     app.state.settings = settings
     app.state.feedback = feedback_store
     app.state.metrics = metrics
+    app.add_middleware(RequestLimits, settings=guardrails)
 
     @app.middleware("http")
     async def add_ids_and_measure(request: Request, call_next):
@@ -225,7 +235,7 @@ def create_app(cfg=None, translator=None, background=True):
         }
 
     @app.post("/translate", response_model=TranslateResponse)
-    def translate(body: TranslateRequest, request: Request):
+    async def translate(body: TranslateRequest, request: Request):
         text = body.text.strip()
         if not text:
             raise HTTPException(422, detail="text is empty")
@@ -239,7 +249,12 @@ def create_app(cfg=None, translator=None, background=True):
             raise HTTPException(422, detail=f"beam_size must be between {limits['min_beam']} and {limits['max_beam']}")
 
         translator = state.require_translator()
-        result = translator.translate_text(text, beam_size=beam, observe=True)
+        try:
+            result = await app.state.inference.translate(translator, text, beam)
+        except QueueFull:
+            raise HTTPException(503, detail="The translation queue is full.", headers={"Retry-After": "1"}) from None
+        except asyncio.TimeoutError:
+            raise HTTPException(504, detail="Translation timed out.") from None
         metrics.observe_translation(beam, result.latency_ms / 1000, result.n_sentences, len(text))
         features = {
             key: value if value is not None and math.isfinite(value) else None for key, value in result.features.items()
