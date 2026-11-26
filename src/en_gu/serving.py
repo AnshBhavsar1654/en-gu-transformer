@@ -122,6 +122,7 @@ class TranslationResult:
     translation: str
     n_sentences: int
     latency_ms: float
+    features: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -151,14 +152,23 @@ class Translator:
         log.info("Loaded model %s from %s on %s in %.1fs", version, path, device, elapsed)
         return cls(model, sp, version, metrics, device, elapsed, settings["model"]["source"])
 
-    def translate_text(self, text, beam_size=5):
+    def translate_text(self, text, beam_size=5, *, observe=False):
         """Translate free text: split into sentences, translate them as one batch, keep the line layout."""
         start = time.perf_counter()
         layout, sentences = split_sentences(text)
+        traces = {} if observe else None
         with self._lock:
-            outputs = translate(self.model, self.sp, sentences, beam_size=beam_size) if sentences else []
+            outputs = translate(self.model, self.sp, sentences, beam_size=beam_size, traces=traces) if sentences else []
         latency_ms = (time.perf_counter() - start) * 1000
-        return TranslationResult(join_sentences(layout, outputs), len(sentences), latency_ms)
+        translation = join_sentences(layout, outputs)
+        features = {}
+        if observe:
+            from en_gu.telemetry import input_features, output_features
+
+            ordered = [traces[i] for i in sorted(traces)]
+            features = input_features(text, self.sp, [trace.source_ids for trace in ordered])
+            features.update(output_features(translation, ordered, features["input_tokens"]))
+        return TranslationResult(translation, len(sentences), latency_ms, features)
 
     def info(self):
         m = self.model

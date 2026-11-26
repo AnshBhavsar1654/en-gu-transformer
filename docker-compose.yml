@@ -40,5 +40,35 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: [monitoring]
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/rules.yml:/etc/prometheus/rules.yml:ro
+      - ./monitoring/scheduled-rules.yml:/etc/prometheus/scheduled-rules.yml:ro
+      - prometheus:/prometheus
+
+  monitor-exporter:
+    image: prom/node-exporter:v1.9.1
+    profiles: [monitoring]
+    command: [--collector.disable-defaults, --collector.textfile, --collector.textfile.directory=/reports]
+    volumes:
+      - ./artifacts/monitoring:/reports:ro
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    profiles: [monitoring]
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana:/var/lib/grafana
+
 volumes:
   feedback:
+  prometheus:
+  grafana:

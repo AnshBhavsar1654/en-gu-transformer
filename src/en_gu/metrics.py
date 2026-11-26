@@ -4,7 +4,16 @@ Each app gets its own registry, so several apps (e.g. in tests) never clash. Pat
 template rather than the raw URL, which keeps the number of time series bounded.
 """
 
-from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Gauge, Histogram, generate_latest
+import psutil
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    Summary,
+    generate_latest,
+)
 
 LATENCY_BUCKETS = (0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8, 15, 30, 60)
 
@@ -12,8 +21,26 @@ LATENCY_BUCKETS = (0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8, 15, 30, 60)
 class ServiceMetrics:
     content_type = CONTENT_TYPE_LATEST
 
-    def __init__(self):
+    def __init__(self, revision="local"):
         self.registry = r = CollectorRegistry()
+        self.revision = revision
+        self.process = psutil.Process()
+        Gauge("en_gu_process_resident_bytes", "Resident memory of the API process", registry=r).set_function(
+            lambda: self.process.memory_info().rss
+        )
+        Gauge("en_gu_process_cpu_seconds_total", "CPU time of the API process", registry=r).set_function(
+            lambda: sum(self.process.cpu_times()[:2])
+        )
+        self.starts = Counter("en_gu_model_load_attempts_total", "Model startup attempts", ["outcome"], registry=r)
+        self.features = Summary(
+            "en_gu_translation_feature", "Translation statistics", ["feature", "version", "revision"], registry=r
+        )
+        self.versioned_feedback = Counter(
+            "en_gu_model_feedback_total",
+            "Feedback by verified model version and handling revision",
+            ["rating", "with_correction", "version", "revision"],
+            registry=r,
+        )
         self.requests = Counter(
             "en_gu_http_requests_total", "HTTP requests by route and status", ["method", "path", "status"], registry=r
         )
@@ -55,6 +82,20 @@ class ServiceMetrics:
         self.model_ready.set(1)
         self.model_load_seconds.set(translator.load_seconds)
         self.model_info.labels(translator.version, translator.source, translator.device).set(1)
+        self.starts.labels("success").inc()
+
+    def observe_features(self, values, version):
+        for name, value in values.items():
+            if value is not None:
+                self.features.labels(name, version, self.revision).observe(value)
+
+    def observe_feedback(self, rating, corrected, version):
+        label = str(corrected).lower()
+        self.feedback.labels(rating, label).inc()
+        for rating_label in ("up", "down"):
+            for correction_label in ("true", "false"):
+                self.versioned_feedback.labels(rating_label, correction_label, version, self.revision)
+        self.versioned_feedback.labels(rating, label, version, self.revision).inc()
 
     def observe_request(self, method, path, status, seconds):
         self.requests.labels(method, path, str(status)).inc()

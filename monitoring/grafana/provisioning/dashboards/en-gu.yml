@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: English to Gujarati
+    folder: English to Gujarati
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

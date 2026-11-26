@@ -1,0 +1,4507 @@
+{
+  "schema": 1,
+  "validation_sha256": "280a2e40e454cb01ac11e9234cac196b241ee4694c77c8be5586da3d5de00a4b",
+  "tokenizer_sha256": "3a24cc05a5b49b40ba45d089bb07d10415af78eedbf3a287a51a4c71f6d6fdb3",
+  "rows": [
+    {
+      "input_chars": 93,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.053763440860215055,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 52,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.019230769230769232,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 46,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06521739130434782,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 84,
+      "input_tokens": 25,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 59,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03389830508474576,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 83,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024096385542168676,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 77,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012987012987012988,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 116,
+      "input_tokens": 27,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04310344827586207,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02702702702702703,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 33,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.030303030303030304,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 130,
+      "input_tokens": 34,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023076923076923078,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.10810810810810811,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 44,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022727272727272728,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 46,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08695652173913043,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 31,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03225806451612903,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 13,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07692307692307693,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 158,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0189873417721519,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 52,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.057692307692307696,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 30,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 76,
+      "input_tokens": 19,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 30,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 68,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014705882352941176,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 61,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01639344262295082,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 65,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03076923076923077,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 32,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03125,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05714285714285714,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 33,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.030303030303030304,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 156,
+      "input_tokens": 34,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02564102564102564,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 9,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1111111111111111,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 128,
+      "input_tokens": 32,
+      "n_sentences": 3,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0234375,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 9,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.14285714285714285,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 91,
+      "input_tokens": 22,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07692307692307693,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 62,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08064516129032258,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 53,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03773584905660377,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 27,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037037037037037035,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 67,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014925373134328358,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 62,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016129032258064516,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 66,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 30,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 43,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023255813953488372,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 75,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 112,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05357142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 13,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07692307692307693,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 103,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.019417475728155338,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05405405405405406,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 178,
+      "input_tokens": 32,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02247191011235955,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 25,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 64,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03125,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 108,
+      "input_tokens": 23,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037037037037037035,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 75,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.013333333333333334,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 55,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03636363636363636,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 57,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017543859649122806,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 52,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.057692307692307696,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 32,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03125,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 30,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 157,
+      "input_tokens": 33,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01910828025477707,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 189,
+      "input_tokens": 47,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0582010582010582,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 78,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08974358974358974,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 125,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 144,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.006944444444444444,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 31,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03225806451612903,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05263157894736842,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08571428571428572,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02564102564102564,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 48,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.020833333333333332,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 45,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022222222222222223,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 160,
+      "input_tokens": 35,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 79,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012658227848101266,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 70,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02857142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 47,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02127659574468085,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 127,
+      "input_tokens": 23,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.031496062992125984,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 34,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1111111111111111,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 129,
+      "input_tokens": 33,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023255813953488372,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 67,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014925373134328358,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 50,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 125,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.008,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 51,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0196078431372549,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 72,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.027777777777777776,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 100,
+      "input_tokens": 19,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.14285714285714285,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 27,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037037037037037035,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 32,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03125,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 94,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02127659574468085,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02564102564102564,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 36,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05555555555555555,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 45,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022222222222222223,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 59,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01694915254237288,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 54,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018518518518518517,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 25,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.12,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 50,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 70,
+      "input_tokens": 16,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05714285714285714,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 79,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012658227848101266,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 62,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016129032258064516,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 84,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 392,
+      "input_tokens": 84,
+      "n_sentences": 3,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012755102040816327,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 65,
+      "input_tokens": 17,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.12307692307692308,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 222,
+      "input_tokens": 58,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.11261261261261261,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.058823529411764705,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 26,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.038461538461538464,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 67,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05970149253731343,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 127,
+      "input_tokens": 23,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.11023622047244094,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 21,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.047619047619047616,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.3157894736842105,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 96,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 221,
+      "input_tokens": 40,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03167420814479638,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 8,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.125,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 67,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014925373134328358,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 53,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018867924528301886,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.15789473684210525,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 33,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06060606060606061,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 79,
+      "input_tokens": 19,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02531645569620253,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05555555555555555,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 96,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.020833333333333332,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.10526315789473684,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 31,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03225806451612903,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 54,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.14814814814814814,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 231,
+      "input_tokens": 65,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08658008658008658,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 374,
+      "input_tokens": 84,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 25,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 93,
+      "input_tokens": 25,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.043010752688172046,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 24,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.041666666666666664,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 136,
+      "input_tokens": 26,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014705882352941176,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 34,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 46,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.021739130434782608,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 13,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 63,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.015873015873015872,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 34,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 25,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 34,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 57,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017543859649122806,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 65,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.015384615384615385,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 23,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.043478260869565216,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 100,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05263157894736842,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 111,
+      "input_tokens": 28,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018018018018018018,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 107,
+      "input_tokens": 23,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037383177570093455,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 43,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023255813953488372,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 27,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037037037037037035,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 87,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.011494252873563218,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 83,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024096385542168676,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 63,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.031746031746031744,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 126,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.031746031746031744,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 95,
+      "input_tokens": 33,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.15789473684210525,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 48,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.020833333333333332,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 122,
+      "input_tokens": 24,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03278688524590164,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.058823529411764705,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 12,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.4166666666666667,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 114,
+      "input_tokens": 26,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.008771929824561403,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05128205128205128,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 113,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017699115044247787,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 31,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03225806451612903,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 75,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.13333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 56,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017857142857142856,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 82,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012195121951219513,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 34,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 23,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.043478260869565216,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 53,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018867924528301886,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 111,
+      "input_tokens": 30,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02702702702702703,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 114,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 98,
+      "input_tokens": 22,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02040816326530612,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 69,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014492753623188406,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 130,
+      "input_tokens": 35,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08461538461538462,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 57,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07017543859649122,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02857142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 113,
+      "input_tokens": 22,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017699115044247787,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02564102564102564,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 118,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03389830508474576,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 11,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.09090909090909091,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02702702702702703,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05128205128205128,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 57,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017543859649122806,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 121,
+      "input_tokens": 28,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.049586776859504134,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05263157894736842,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 57,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017543859649122806,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 61,
+      "input_tokens": 15,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06557377049180328,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 60,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 16,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0625,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02564102564102564,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02564102564102564,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 39,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02564102564102564,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 62,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016129032258064516,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 12,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.25,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 53,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018867924528301886,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 95,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.031578947368421054,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 46,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.043478260869565216,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02702702702702703,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 7,
+      "input_tokens": 2,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 206,
+      "input_tokens": 49,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.019417475728155338,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05714285714285714,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 91,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01098901098901099,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 30,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 23,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.043478260869565216,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 53,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03773584905660377,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 120,
+      "input_tokens": 24,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.008333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 26,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07692307692307693,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07142857142857142,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 49,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.061224489795918366,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 73,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0821917808219178,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02857142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 72,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.027777777777777776,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 69,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 44,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022727272727272728,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 209,
+      "input_tokens": 38,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014354066985645933,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 43,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023255813953488372,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 60,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.058823529411764705,
+      "digit_or_punctuation_share": 0.18333333333333332,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 27,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037037037037037035,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02857142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 33,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.030303030303030304,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 45,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.044444444444444446,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07317073170731707,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 56,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05357142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02702702702702703,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 50,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 125,
+      "input_tokens": 27,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 34,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 59,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.11864406779661017,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.058823529411764705,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 27,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037037037037037035,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 59,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03389830508474576,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 53,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018867924528301886,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.13513513513513514,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 85,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023529411764705882,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 67,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014925373134328358,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 235,
+      "input_tokens": 50,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0425531914893617,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 108,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.009259259259259259,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 58,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 65,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.046153846153846156,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 44,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022727272727272728,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05555555555555555,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 123,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016260162601626018,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 47,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02127659574468085,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 25,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 62,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016129032258064516,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 129,
+      "input_tokens": 26,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023255813953488372,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 97,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.010309278350515464,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 56,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017857142857142856,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 81,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012345679012345678,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02857142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 60,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 24,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.041666666666666664,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 79,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012658227848101266,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 51,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0196078431372549,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.42857142857142855,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 80,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0375,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.058823529411764705,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 21,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.14285714285714285,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 65,
+      "input_tokens": 17,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1076923076923077,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 55,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01818181818181818,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 50,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 144,
+      "input_tokens": 29,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.027777777777777776,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 10,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.14285714285714285,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 70,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014285714285714285,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 62,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016129032258064516,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 110,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.00909090909090909,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 82,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012195121951219513,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 33,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.030303030303030304,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 23,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.043478260869565216,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 87,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.011494252873563218,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 50,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 47,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02127659574468085,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 117,
+      "input_tokens": 34,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05128205128205128,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 153,
+      "input_tokens": 34,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.026143790849673203,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07142857142857142,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 135,
+      "input_tokens": 29,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02962962962962963,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 106,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03773584905660377,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 36,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.027777777777777776,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 110,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.00909090909090909,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 16,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0625,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 45,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022222222222222223,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 27,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07407407407407407,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 47,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02127659574468085,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 16,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 52,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.038461538461538464,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 124,
+      "input_tokens": 26,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016129032258064516,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05555555555555555,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04878048780487805,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 78,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01282051282051282,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 84,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.011904761904761904,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 21,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.047619047619047616,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 88,
+      "input_tokens": 22,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06818181818181818,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05555555555555555,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 100,
+      "input_tokens": 25,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 120,
+      "input_tokens": 23,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016666666666666666,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 146,
+      "input_tokens": 27,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02054794520547945,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 68,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 24,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.041666666666666664,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 101,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.009900990099009901,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 32,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03125,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 34,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 56,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 59,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01694915254237288,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05555555555555555,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 36,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.027777777777777776,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 55,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01818181818181818,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 82,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 44,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 54,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018518518518518517,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 90,
+      "input_tokens": 19,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022222222222222223,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 47,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02127659574468085,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 10,
+      "input_tokens": 2,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 33,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.030303030303030304,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.15,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 43,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023255813953488372,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 54,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.018518518518518517,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 82,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 70,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02857142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 2,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 96,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07142857142857142,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 102,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.00980392156862745,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 14,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 36,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.027777777777777776,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 97,
+      "input_tokens": 19,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.010309278350515464,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 181,
+      "input_tokens": 38,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.055248618784530384,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 149,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.013422818791946308,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 30,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.06666666666666667,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 21,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.047619047619047616,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 36,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.027777777777777776,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 56,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017857142857142856,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 71,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04225352112676056,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 57,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017543859649122806,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.13157894736842105,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 101,
+      "input_tokens": 31,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0297029702970297,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 50,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.14,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 13,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07692307692307693,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.16666666666666666,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05263157894736842,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.058823529411764705,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 45,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022222222222222223,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05263157894736842,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 45,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1111111111111111,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 72,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.013888888888888888,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 29,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.034482758620689655,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 26,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07692307692307693,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 17,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.058823529411764705,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 91,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02197802197802198,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 30,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 2,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 129,
+      "input_tokens": 27,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.015503875968992248,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02702702702702703,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.047619047619047616,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 47,
+      "input_tokens": 14,
+      "n_sentences": 2,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02127659574468085,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 44,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022727272727272728,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 31,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03225806451612903,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 49,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02040816326530612,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 22,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.045454545454545456,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 46,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.021739130434782608,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 93,
+      "input_tokens": 20,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.021505376344086023,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.125,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 56,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.017857142857142856,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 98,
+      "input_tokens": 24,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.030612244897959183,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 15,
+      "input_tokens": 2,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 76,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.039473684210526314,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 41,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.024390243902439025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 112,
+      "input_tokens": 22,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0625,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 18,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05555555555555555,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 12,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 70,
+      "input_tokens": 12,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.014285714285714285,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 132,
+      "input_tokens": 30,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05303030303030303,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 52,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.28846153846153844,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 70,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04285714285714286,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 20,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 35,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02857142857142857,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 94,
+      "input_tokens": 18,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05319148936170213,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 72,
+      "input_tokens": 22,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1111111111111111,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 45,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.022222222222222223,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 21,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.047619047619047616,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 81,
+      "input_tokens": 17,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.037037037037037035,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 55,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01818181818181818,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 37,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02702702702702703,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 12,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.08333333333333333,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03571428571428571,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 97,
+      "input_tokens": 21,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.061855670103092786,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 103,
+      "input_tokens": 28,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.1262135922330097,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 26,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.038461538461538464,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 12,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.25,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 25,
+      "input_tokens": 5,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 13,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 31,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03225806451612903,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 59,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01694915254237288,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 40,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.025,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 145,
+      "input_tokens": 34,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.020689655172413793,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 67,
+      "input_tokens": 13,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029850746268656716,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 105,
+      "input_tokens": 25,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.047619047619047616,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 28,
+      "input_tokens": 8,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07142857142857142,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 195,
+      "input_tokens": 39,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.020512820512820513,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 66,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.015151515151515152,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 43,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023255813953488372,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 60,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.016666666666666666,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 62,
+      "input_tokens": 16,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0967741935483871,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 68,
+      "input_tokens": 10,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 79,
+      "input_tokens": 19,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.012658227848101266,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 93,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.021505376344086023,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 38,
+      "input_tokens": 7,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02631578947368421,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 25,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 138,
+      "input_tokens": 23,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.07246376811594203,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 139,
+      "input_tokens": 29,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.02158273381294964,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 140,
+      "input_tokens": 38,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.04285714285714286,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 64,
+      "input_tokens": 15,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.046875,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 19,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.05263157894736842,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 208,
+      "input_tokens": 48,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.009615384615384616,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 9,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 55,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.01818181818181818,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 24,
+      "input_tokens": 6,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.041666666666666664,
+      "non_latin_share": 0.0,
+      "non_english": 1
+    },
+    {
+      "input_chars": 42,
+      "input_tokens": 11,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.023809523809523808,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 68,
+      "input_tokens": 14,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.029411764705882353,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    },
+    {
+      "input_chars": 9,
+      "input_tokens": 3,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.0,
+      "non_latin_share": 0.0,
+      "non_english": null
+    },
+    {
+      "input_chars": 32,
+      "input_tokens": 4,
+      "n_sentences": 1,
+      "byte_or_unknown_share": 0.0,
+      "digit_or_punctuation_share": 0.03125,
+      "non_latin_share": 0.0,
+      "non_english": 0
+    }
+  ]
+}

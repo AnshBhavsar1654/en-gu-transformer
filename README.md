@@ -377,3 +377,49 @@ are not used by the app.
 ## License
 
 MIT
+
+
+## Monitoring
+
+The API records system metrics at `/metrics` and writes structured translation and feedback events to stdout.
+The monitoring stack includes Prometheus rules and Grafana dashboards for service health, input drift,
+output quality, and model versions. See the [operator runbook](RUNBOOKS.md#monitoring) for investigation
+and rollback steps.
+
+On a machine with the checkpoint at `models/best.pt`, start the local dashboards and generate an example report.
+
+```bash
+python -m pip install -e '.[api,monitor]'
+docker compose --profile monitoring up -d --build
+python scripts/simulate_traffic.py --profile normal --count 100
+python scripts/simulate_traffic.py --profile long --count 100
+docker compose logs --no-log-prefix api > artifacts/monitoring/traffic.log
+python -m en_gu.drift report --logs artifacts/monitoring/traffic.log --include-simulated
+python -m en_gu.quality_canary --url http://localhost:8000 --min-chrf 43.44758119227103
+```
+
+Grafana is at `http://localhost:3000` and Prometheus is at `http://localhost:9090`. Grafana starts with
+the local `admin` / `admin` login. The drift command writes Evidently HTML for the 24-hour and 7-day
+windows when enough data is present. It requires 100 translations per window by default. The persistent
+drift alert requires two consecutive shifted 24-hour windows. Demo profiles are simulated traffic
+and include long paragraphs, code mixing, non-English inputs, and news or conversational language.
+Production drift reports exclude the simulator, quality canary, and smoke tests.
+
+The drift reference uses statistics from 500 frozen validation inputs and the champion tokenizer.
+The input report uses Kolmogorov–Smirnov tests for lengths and PSI for the other measured input features.
+Output statistics are quality proxies. Language identification is heuristic, and the model's mean token
+log probability measures its own confidence. The 200-pair canary uses fixed validation examples and
+calls the serving API at beam 5. The existing checkpoint scored **21.42 BLEU** and **43.95 chrF++**
+through the local API; the initial chrF++ alert floor is **43.45**. See
+[golden-baseline.json](monitoring/golden-baseline.json) for the exact values and model identifier.
+
+Monitoring events contain aggregate features, model and revision labels, and an HMAC of the
+input. The default key is random per API process. Set `EN_GU_TELEMETRY_HASH_KEY` through a secret
+only if hashes must match across instances. Raw text is kept in the feedback database only when the
+user submits a correction. The API prunes that database at startup, hourly while running, and on writes.
+The default retention is 90 days. Cloud Run instances have independent, ephemeral SQLite storage.
+
+The [production monitoring workflow](.github/workflows/monitoring.yml) runs the canary and drift report
+daily after cloud setup. Cloud Run's built-in metrics cover fleet request rates, latency, CPU, memory,
+and startup. The workflow can send daily quality and drift statistics to Grafana Cloud, while reports
+are retained as workflow artifacts for 30 days.

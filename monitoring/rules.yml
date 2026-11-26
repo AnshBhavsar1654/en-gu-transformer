@@ -1,0 +1,68 @@
+groups:
+  - name: en-gu-live
+    interval: 1m
+    rules:
+      - record: en_gu:translate_p95_seconds:5m
+        expr: histogram_quantile(0.95, sum by (le) (rate(en_gu_http_request_duration_seconds_bucket{path="/translate"}[5m])))
+
+      - alert: TranslationHighErrorRate
+        expr: |
+          sum(rate(en_gu_http_requests_total{path="/translate",status=~"5.."}[5m])) /
+          sum(rate(en_gu_http_requests_total{path="/translate"}[5m])) > 0.02
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: More than 2% of translation requests failed with a server error.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#service-or-output-regression
+
+      - alert: TranslationLatencyRegression
+        expr: |
+          en_gu:translate_p95_seconds:5m > 2 * quantile_over_time(0.5, en_gu:translate_p95_seconds:5m[7d] offset 1h)
+          and sum(increase(en_gu_http_request_duration_seconds_count{path="/translate"}[5m])) >= 10
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: Translation p95 more than doubled against its historical baseline.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#service-or-output-regression
+
+      - record: en_gu:output_proxy:1h
+        expr: |
+          sum by (feature) (increase(en_gu_translation_feature_sum{feature=~"repetition_rate|hit_length_limit"}[1h])) /
+          sum by (feature) (increase(en_gu_translation_feature_count{feature=~"repetition_rate|hit_length_limit"}[1h]))
+          and on(feature)
+          sum by (feature) (increase(en_gu_translation_feature_count{feature=~"repetition_rate|hit_length_limit"}[1h])) >= 20
+
+      - alert: TranslationDegenerateOutput
+        expr: |
+          en_gu:output_proxy:1h >
+          avg_over_time(en_gu:output_proxy:1h[7d] offset 1h) + 3 * stddev_over_time(en_gu:output_proxy:1h[7d] offset 1h)
+          and count_over_time(en_gu:output_proxy:1h[7d:1h] offset 1h) >= 24
+        for: 10m
+        labels:
+          severity: review
+        annotations:
+          summary: Output repetition or length-limit hits increased above baseline.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#service-or-output-regression
+
+      - record: en_gu:feedback_total:7d
+        expr: sum by (version) (increase(en_gu_model_feedback_total[7d]))
+
+      - record: en_gu:feedback_down_share:7d
+        expr: |
+          (sum by (version) (increase(en_gu_model_feedback_total{rating="down"}[7d])) or
+          0 * en_gu:feedback_total:7d) / en_gu:feedback_total:7d
+
+      - alert: TranslationFeedbackDrop
+        expr: |
+          en_gu:feedback_down_share:7d - en_gu:feedback_down_share:7d offset 7d >
+            2 * sqrt(0.25 / en_gu:feedback_total:7d + 0.25 / en_gu:feedback_total:7d offset 7d)
+          and en_gu:feedback_total:7d >= 30
+          and en_gu:feedback_total:7d offset 7d >= 30
+        for: 1h
+        labels:
+          severity: review
+        annotations:
+          summary: The share of negative ratings increased week over week.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#input-drift

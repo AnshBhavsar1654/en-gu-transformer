@@ -1,0 +1,9 @@
+{
+  "model_version": "sha-bab7a2b0b87d",
+  "pairs": 200,
+  "beam_size": 5,
+  "bleu": 21.418537308874072,
+  "chrf": 43.94758119227103,
+  "chrf_tolerance": 0.5,
+  "min_chrf": 43.44758119227103
+}
