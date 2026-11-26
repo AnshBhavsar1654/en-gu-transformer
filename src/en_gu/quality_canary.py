@@ -29,11 +29,16 @@ def golden_pairs(folder):
     return [(sides[0][i], sides[1][i]) for i in indices]
 
 
-def score_endpoint(url, pairs):
+def score_endpoint(url, pairs, min_interval=0.12):
     wait_until_ready(url, 180)
     hypotheses = []
     versions = set()
+    next_request = time.monotonic()
     for source, _ in pairs:
+        delay = next_request - time.monotonic()
+        if delay > 0:
+            time.sleep(delay)
+        next_request = time.monotonic() + min_interval
         status, headers, content = request(
             url,
             "POST",
@@ -71,12 +76,15 @@ def main():
     parser.add_argument("--out", type=Path, default=Path("artifacts/monitoring/golden"))
     parser.add_argument("--min-chrf", required=True, type=float)
     parser.add_argument("--expect-version")
+    parser.add_argument("--min-interval", type=float, default=0.12, help="minimum seconds between request starts")
     args = parser.parse_args()
     if not 0 <= args.min_chrf <= 100:
         parser.error("--min-chrf must be between 0 and 100")
+    if not 0 <= args.min_interval < 60:
+        parser.error("--min-interval must be at least zero and less than 60 seconds")
     outcome = {"min_chrf": args.min_chrf}
     try:
-        outcome.update(score_endpoint(args.url, golden_pairs(args.eval_dir)))
+        outcome.update(score_endpoint(args.url, golden_pairs(args.eval_dir), args.min_interval))
         outcome["passed"] = outcome["chrf"] >= args.min_chrf and (
             args.expect_version is None or outcome["model_version"] == args.expect_version
         )

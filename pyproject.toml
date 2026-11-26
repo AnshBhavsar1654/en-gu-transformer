@@ -21,6 +21,7 @@ ui = ["streamlit>=1.40.0", "httpx>=0.27", "huggingface_hub>=0.20.0"]
 serve = ["en-gu[api,ui]"]
 train = ["sacrebleu>=2.4.0", "tqdm>=4.66.0", "matplotlib>=3.7.0"]
 tracking = ["mlflow>=2.16"]
+load = ["locust>=2.32,<3"]
 monitor = [
     "evidently==0.7.23",
     "pandas<3.1",  # Evidently imports a pandas helper removed in 3.1 (evidentlyai/evidently#1974).

@@ -274,6 +274,8 @@ def greedy_decode(model, src, max_len_a=1.5, max_len_b=10, *, detailed=False):
 
 @torch.no_grad()
 def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_len_b=10, *, detailed=False):
+    if beam_size == 1:
+        return greedy_decode(model, src, max_len_a, max_len_b, detailed=detailed)
     batch_size, k = src.size(0), beam_size
     device = src.device
     max_new = _max_new_tokens(model, src, max_len_a, max_len_b)

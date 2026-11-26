@@ -110,8 +110,9 @@ curl -X POST localhost:8000/translate -H "content-type: application/json" -d '{"
   readable reason. Text is split into sentences (the model was trained on single sentences) and the line layout is kept.
 - The model loads in a background thread, so the container answers `/health` immediately. A model that fails to load
   leaves the service up with `/ready` false and the error in its body, instead of a crash loop.
-- Requests are translated one at a time per process: concurrent CPU inference only competes for the same cores.
-  Throughput and concurrency will be set from load tests.
+- Requests are translated one at a time per process. The queue and deadline bound how long clients wait.
+  The [capacity runbook](RUNBOOKS.md#inference-capacity-and-failure-handling) includes the measured
+  one-instance throughput and latency.
 - Settings live in `configs/serve.yaml`; `EN_GU_MODEL_SOURCE`, `EN_GU_MODEL_PATH`, `EN_GU_MODEL_ALIAS`,
   `EN_GU_FEEDBACK_DB`, `EN_GU_DEVICE` and `PORT` override them.
 
@@ -304,11 +305,13 @@ Operating them (rollback, failed deploys, canary, budget alert) is in [RUNBOOKS.
 A failure in steps 2–5 sends 100% of traffic back to the revision from step 1. Rolling back by hand is
 `SERVICE=en-gu-api bash scripts/rollback.sh` (see the runbook; target under 2 minutes).
 
-**Sizing** (API): 1 vCPU, 2 GiB, startup CPU boost, concurrency 4, request timeout 60 s. Translations run one at a
+**Sizing** (API): 1 vCPU, 2 GiB, startup CPU boost, concurrency 3, request timeout 60 s. Translations run one at a
 time per instance, so concurrency only lets a few requests queue instead of starting a new instance for each. A
 **startup probe on `/ready`** (every 3 s, up to 240 s) keeps Cloud Run from routing requests to an instance before its
 model is loaded: a request that arrives during a cold start waits instead of getting a 503. Liveness is `/health`.
-These values are a starting point; concurrency and timeout get revisited with load-test numbers (Phase 7).
+The inference API bounds admission to one running translation and two queued requests. The
+[capacity runbook](RUNBOOKS.md#inference-capacity-and-failure-handling) describes the request budgets,
+failure responses, and load-test procedure.
 
 **Model delivery**, set with the repository variable `EN_GU_MODEL_DELIVERY`:
 

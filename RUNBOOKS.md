@@ -262,3 +262,65 @@ rollout reports. The release jobs share their Cloud Run service lock with code d
 
 Development checks cover registry transitions and compare fixture traffic locally. The production workflow requires
 a configured registry, model bucket, authenticated shadow service, and enough traffic to exercise both windows.
+
+## Inference capacity and failure handling
+
+The API accepts up to 32 KiB of JSON at `/translate` and 160 KiB at `/feedback`. The larger feedback budget
+covers the three correction fields even with escaped Unicode. The route-level character and sentence limits still
+apply. Each API process has separate token buckets for translations and feedback. These limits apply across requests
+handled by that process.
+
+| Response | Meaning | Operator action |
+| --- | --- | --- |
+| 413 | JSON body exceeded the byte budget | Check payload size and the relevant route limit |
+| 429 | Endpoint token bucket is exhausted | Back off using `Retry-After` |
+| 503 | Model is unavailable or the inference queue is full | Check `/ready`, then retry with backoff when healthy |
+| 504 | Translation exceeded its deadline | Reduce the workload and check inference latency |
+
+One worker runs translations. Up to two others can wait. The 45-second deadline includes queue time. Work that
+expires before reaching the worker is cancelled. A running job retains its slot until PyTorch returns, even if the
+client has already received a timeout. Health checks and feedback remain available while inference is busy.
+Missing or corrupt checkpoints keep readiness false and leave liveness available for investigation.
+
+Cloud Run admits up to three concurrent requests per instance with a 60-second transport timeout. Keep the
+deployment concurrency and inference queue configuration aligned when changing these limits. Use `/metrics`
+to inspect the rate of 429, 503, and 504 responses.
+
+Run the benchmark against a local or staging API with a warm model. For a single-instance comparison, cap
+the container at one CPU and set `OMP_NUM_THREADS=1` and `MKL_NUM_THREADS=1`.
+
+```bash
+docker build --target api -t en-gu-api:local .
+docker run --rm --cpus=1 --memory=2g -p 127.0.0.1:8040:8000 \
+  -e OMP_NUM_THREADS=1 -e MKL_NUM_THREADS=1 -v "$PWD/models:/models:ro" en-gu-api:local
+```
+
+Once `/ready` answers, run the load driver from a second terminal.
+
+```bash
+python -m pip install -e '.[load]'
+mkdir -p artifacts/reliability
+locust -f load_testing/locustfile.py --host http://localhost:8040 --headless \
+  --users 1 --spawn-rate 2 --run-time 75s --stop-timeout 10 --csv artifacts/reliability/v1-1
+locust -f load_testing/locustfile.py --host http://localhost:8040 --headless \
+  --users 2 --spawn-rate 2 --run-time 75s --stop-timeout 10 --csv artifacts/reliability/v1-2
+```
+
+Use the aggregate CSV rows for throughput, failures, and end-to-end p95. The load driver uses fixed short English
+inputs and beam 5. Its requests are identified as synthetic in telemetry. Repeat the run for the production
+instance size before using these results to make a larger capacity change. [Locust configuration](https://docs.locust.io/en/stable/configuration.html)
+
+### Measured baseline and initial objectives
+
+The v1 checkpoint served these requests in a local Linux container with one vCPU, 2 GiB, one PyTorch thread,
+and a warm model. The Locust 2.47.0 runs used the same eight English inputs of 5–12 SentencePiece tokens
+for 75 seconds each.
+
+| Concurrent users | Requests | Failures | Throughput | End-to-end p95 |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 156 | 0 | 2.10 requests/s | 740 ms |
+| 2 | 165 | 0 | 2.22 requests/s | 1,300 ms |
+
+Allow about two short beam-5 translations per second per instance when planning capacity. Use provisional p95
+targets of 800 ms at one active client and 1,500 ms at two, plus at least 99% successful requests under this
+benchmark workload. Use production traffic and longer measurements to calibrate fleet-level objectives.
