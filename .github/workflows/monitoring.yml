@@ -1,0 +1,109 @@
+name: Production monitoring
+
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-monitoring
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: src
+  DO_NOT_TRACK: '1'
+  PRODUCTION_API_URL: ${{ vars.PRODUCTION_API_URL }}
+  GRAFANA_INFLUX_URL: ${{ vars.GRAFANA_INFLUX_URL }}
+  GRAFANA_METRICS_USER: ${{ vars.GRAFANA_METRICS_USER }}
+
+jobs:
+  golden:
+    if: vars.PRODUCTION_API_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install sacrebleu prometheus-client
+      - name: Probe production
+        run: |
+          floor=$(jq -er '.min_chrf' monitoring/golden-baseline.json)
+          python -m en_gu.quality_canary --url "$PRODUCTION_API_URL" --min-chrf "$floor"
+      - name: Publish quality metrics
+        if: always() && env.GRAFANA_INFLUX_URL != '' && hashFiles('artifacts/monitoring/golden.influx') != ''
+        env:
+          GRAFANA_METRICS_TOKEN: ${{ secrets.GRAFANA_METRICS_TOKEN }}
+        run: |
+          curl --fail --silent --show-error --retry 3 --max-time 60 \
+            -u "${GRAFANA_METRICS_USER}:${GRAFANA_METRICS_TOKEN}" \
+            --data-binary @artifacts/monitoring/golden.influx "$GRAFANA_INFLUX_URL"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-set-result
+          path: |
+            artifacts/monitoring/golden.json
+            artifacts/monitoring/golden.prom
+          retention-days: 30
+
+  drift:
+    if: vars.PRODUCTION_API_URL != '' && vars.GCP_MONITORING_SA != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install 'evidently==0.7.23' prometheus-client
+      - uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_MONITORING_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Retrieve and compare production telemetry
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          SERVICE: ${{ vars.PRODUCTION_SERVICE || 'en-gu-api' }}
+          REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+        run: |
+          gcloud logging read \
+            "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"$SERVICE\" AND
+             resource.labels.location=\"$REGION\" AND (jsonPayload.event=\"feedback\" OR
+             (jsonPayload.event=\"translation\" AND jsonPayload.traffic=\"regular\"))" \
+            --project="$PROJECT" --freshness=7d --order=desc --limit=100000 --format=json > "$RUNNER_TEMP/telemetry.json"
+          if [ "$(jq 'length' "$RUNNER_TEMP/telemetry.json")" -ge 100000 ]; then
+            echo "::error::Telemetry exceeded the log retrieval limit; use a paginated export before comparing."
+            exit 1
+          fi
+          python -m en_gu.drift report --logs "$RUNNER_TEMP/telemetry.json"
+      - name: Publish drift metrics
+        if: env.GRAFANA_INFLUX_URL != ''
+        env:
+          GRAFANA_METRICS_TOKEN: ${{ secrets.GRAFANA_METRICS_TOKEN }}
+        run: |
+          curl --fail --silent --show-error --retry 3 --max-time 60 \
+            -u "${GRAFANA_METRICS_USER}:${GRAFANA_METRICS_TOKEN}" \
+            --data-binary @artifacts/monitoring/drift.influx "$GRAFANA_INFLUX_URL"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: translation-drift-report
+          path: |
+            artifacts/monitoring/drift*.json
+            artifacts/monitoring/drift*.html
+            artifacts/monitoring/drift.prom
+          retention-days: 30

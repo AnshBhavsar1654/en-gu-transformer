@@ -6,6 +6,7 @@ the exact same architecture and decoding code.
 
 import math
 import os
+from dataclasses import dataclass
 
 import torch
 import torch.nn as nn
@@ -176,6 +177,19 @@ class Transformer(nn.Module):
 BANNED_TOKENS = [PAD_IDX, UNK_IDX, BOS_IDX]
 
 
+@dataclass
+class DecodedSentence:
+    ids: list[int]
+    mean_log_probability: float | None
+    hit_length_limit: bool
+
+
+@dataclass
+class TranslationTrace:
+    source_ids: list[int]
+    decoded: DecodedSentence
+
+
 def _max_new_tokens(model, src, max_len_a, max_len_b):
     src_len = int((src != PAD_IDX).sum(1).max())
     return min(model.max_len - 1, int(max_len_a * src_len + max_len_b))
@@ -188,24 +202,36 @@ def _strip(ids):
 
 
 @torch.no_grad()
-def greedy_decode(model, src, max_len_a=1.5, max_len_b=10):
+def greedy_decode(model, src, max_len_a=1.5, max_len_b=10, *, detailed=False):
     max_new = _max_new_tokens(model, src, max_len_a, max_len_b)
     memory, src_mask = model.encode(src)
     ys = torch.full((src.size(0), 1), BOS_IDX, dtype=torch.long, device=src.device)
     finished = torch.zeros(src.size(0), dtype=torch.bool, device=src.device)
+    if detailed:
+        scores = torch.zeros(src.size(0), device=src.device)
     for _ in range(max_new):
         logits = model.decode(ys, memory, src_mask)[:, -1]
+        if detailed:
+            logp = F.log_softmax(logits.float(), dim=-1)
         logits[:, BANNED_TOKENS] = float("-inf")
         next_tok = logits.argmax(-1).masked_fill(finished, PAD_IDX)
+        if detailed:
+            scores += logp.gather(1, next_tok[:, None]).squeeze(1).masked_fill(finished, 0)
         ys = torch.cat([ys, next_tok.unsqueeze(1)], dim=1)
         finished |= next_tok == EOS_IDX
         if finished.all():
             break
-    return [_strip(seq) for seq in ys[:, 1:].tolist()]
+    tokens = [_strip(seq) for seq in ys[:, 1:].tolist()]
+    if not detailed:
+        return tokens
+    return [
+        DecodedSentence(ids, score / (len(ids) + ended) if ids or ended else None, not ended and max_new > 0)
+        for ids, score, ended in zip(tokens, scores.tolist(), finished.tolist())
+    ]
 
 
 @torch.no_grad()
-def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_len_b=10):
+def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_len_b=10, *, detailed=False):
     batch_size, k = src.size(0), beam_size
     device = src.device
     max_new = _max_new_tokens(model, src, max_len_a, max_len_b)
@@ -218,7 +244,7 @@ def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_
     scores = torch.full((batch_size, k), float("-inf"), device=device)
     scores[:, 0] = 0.0  # all beams start identical, so only one is alive at the first step
     beam_offset = (torch.arange(batch_size, device=device) * k).unsqueeze(1)
-    finished = [[] for _ in range(batch_size)]  # (normalised score, token ids)
+    finished = [[] for _ in range(batch_size)]  # (ranking score, token ids, raw score)
     done = [False] * batch_size
 
     for _ in range(max_new):
@@ -245,7 +271,7 @@ def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_
                     break
                 if tok == EOS_IDX:
                     hyp = seqs[b * k + beam, 1:].tolist()
-                    finished[b].append((score / (len(hyp) + 1) ** length_penalty, hyp))
+                    finished[b].append((score / (len(hyp) + 1) ** length_penalty, hyp, score))
                 else:
                     next_scores[b][n], next_beam[b][n], next_tok[b][n] = score, beam, tok
                     n += 1
@@ -262,27 +288,38 @@ def beam_search(model, src, beam_size=5, length_penalty=1.0, max_len_a=1.5, max_
 
     results = []
     for b in range(batch_size):
-        if not finished[b]:  # hit the length limit: fall back to the alive beams
+        ended = bool(finished[b])
+        if not ended:  # hit the length limit: fall back to the alive beams
             for j in range(k):
                 score = scores[b, j].item()
                 if score > float("-inf"):
                     hyp = seqs[b * k + j, 1:].tolist()
-                    finished[b].append((score / max(len(hyp), 1) ** length_penalty, hyp))
-        results.append(max(finished[b])[1] if finished[b] else [])
+                    finished[b].append((score / max(len(hyp), 1) ** length_penalty, hyp, score))
+        _, ids, score = max(finished[b], default=(0, [], 0))
+        length = len(ids) + ended
+        results.append(
+            DecodedSentence(ids, score / length if length else None, not ended and len(ids) == max_new > 0)
+            if detailed
+            else ids
+        )
     return results
 
 
 @torch.no_grad()
-def translate(model, sp, sentences, beam_size=5, batch_size=32, max_len_a=1.5, max_len_b=10):
+def translate(model, sp, sentences, beam_size=5, batch_size=32, max_len_a=1.5, max_len_b=10, *, traces=None):
     """Translate a list of English sentences. `sp` is the SentencePiece processor."""
     model.eval()
     device = next(model.parameters()).device
     results = [""] * len(sentences)
     encoded = {}
+    source_ids = {}
     for i, sentence in enumerate(sentences):
         sentence = normalize_text(sentence)
         if sentence:
-            encoded[i] = sp.encode(sentence)[: model.max_len - 1] + [EOS_IDX]
+            ids = sp.encode(sentence)
+            encoded[i] = ids[: model.max_len - 1] + [EOS_IDX]
+            if traces is not None:
+                source_ids[i] = ids
 
     order = sorted(encoded, key=lambda i: len(encoded[i]))  # similar lengths -> less padding
     for start in range(0, len(order), batch_size):
@@ -292,12 +329,16 @@ def translate(model, sp, sentences, beam_size=5, batch_size=32, max_len_a=1.5, m
         for row, i in enumerate(idx):
             src[row, : len(encoded[i])] = torch.tensor(encoded[i])
         src = src.to(device)
+        decode_options = {"max_len_a": max_len_a, "max_len_b": max_len_b, "detailed": traces is not None}
         if beam_size > 1:
-            outputs = beam_search(model, src, beam_size, max_len_a=max_len_a, max_len_b=max_len_b)
+            outputs = beam_search(model, src, beam_size, **decode_options)
         else:
-            outputs = greedy_decode(model, src, max_len_a=max_len_a, max_len_b=max_len_b)
-        for i, ids in zip(idx, outputs):
-            results[i] = sp.decode(ids)
+            outputs = greedy_decode(model, src, **decode_options)
+        for i, output in zip(idx, outputs):
+            if traces is not None:
+                traces[i] = TranslationTrace(source_ids[i], output)
+                output = output.ids
+            results[i] = sp.decode(output)
     return results
 
 

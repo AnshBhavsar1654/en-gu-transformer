@@ -1,0 +1,275 @@
+{
+  "uid": "en-gu-quality",
+  "title": "Output quality",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Golden-set scores and floor",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_golden_chrf[36h])",
+          "legendFormat": "chrF++ {{version}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "last_over_time(en_gu_golden_bleu[36h])",
+          "legendFormat": "BLEU {{version}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "last_over_time(en_gu_golden_chrf_floor[36h])",
+          "legendFormat": "chrF++ floor",
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Output quality proxies",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_daily_feature_mean{feature=~\"repetition_rate|hit_length_limit|output_latin_share\"}[36h])",
+          "legendFormat": "daily {{feature}} {{revision}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (feature, version, revision) (rate(en_gu_translation_feature_sum{feature=~\"repetition_rate|hit_length_limit|output_latin_share\"}[5m])) / sum by (feature, version, revision) (rate(en_gu_translation_feature_count{feature=~\"repetition_rate|hit_length_limit|output_latin_share\"}[5m]))",
+          "legendFormat": "live {{feature}} {{revision}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Output to input token ratio",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_daily_feature_mean{feature=~\"output_input_ratio\"}[36h])",
+          "legendFormat": "daily {{revision}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (feature, version, revision) (rate(en_gu_translation_feature_sum{feature=~\"output_input_ratio\"}[5m])) / sum by (feature, version, revision) (rate(en_gu_translation_feature_count{feature=~\"output_input_ratio\"}[5m]))",
+          "legendFormat": "live {{revision}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Mean token log probability",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_daily_feature_mean{feature=~\"mean_log_probability\"}[36h])",
+          "legendFormat": "daily {{revision}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (feature, version, revision) (rate(en_gu_translation_feature_sum{feature=~\"mean_log_probability\"}[5m])) / sum by (feature, version, revision) (rate(en_gu_translation_feature_count{feature=~\"mean_log_probability\"}[5m]))",
+          "legendFormat": "live {{revision}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Thumbs-down and correction shares",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum by (version) (rate(en_gu_model_feedback_total{rating=\"down\"}[1h])) / (sum by (version) (rate(en_gu_model_feedback_total[1h])))",
+          "legendFormat": "live thumbs down {{version}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (version) (rate(en_gu_model_feedback_total{with_correction=\"true\"}[1h])) / (sum by (version) (rate(en_gu_model_feedback_total[1h])))",
+          "legendFormat": "live corrections {{version}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (version) (last_over_time(en_gu_daily_feedback_count{rating=\"down\"}[36h])) / sum by (version) (sum by (version, rating, with_correction) (last_over_time(en_gu_daily_feedback_count[36h])))",
+          "legendFormat": "daily thumbs down {{version}}",
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (version) (last_over_time(en_gu_daily_feedback_count{with_correction=\"true\"}[36h])) / sum by (version) (sum by (version, rating, with_correction) (last_over_time(en_gu_daily_feedback_count[36h])))",
+          "legendFormat": "daily corrections {{version}}",
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    }
+  ]
+}

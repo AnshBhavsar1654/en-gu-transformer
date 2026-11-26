@@ -1,0 +1,221 @@
+{
+  "uid": "en-gu-drift",
+  "title": "Input drift",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Share of tested features drifting",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_drift_score[36h])",
+          "legendFormat": "{{window}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Translation count in each report window",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_drift_samples[36h])",
+          "legendFormat": "{{window}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Drifting features in the last 24 hours",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_drift_feature_drifted{window=\"24h\"}[36h]) == 1",
+          "legendFormat": "{{feature}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Input length and sentence count",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_daily_feature_mean{feature=~\"input_chars|input_tokens|n_sentences\"}[36h])",
+          "legendFormat": "daily {{feature}} {{revision}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (feature, version, revision) (rate(en_gu_translation_feature_sum{feature=~\"input_chars|input_tokens|n_sentences\"}[5m])) / sum by (feature, version, revision) (rate(en_gu_translation_feature_count{feature=~\"input_chars|input_tokens|n_sentences\"}[5m]))",
+          "legendFormat": "live {{feature}} {{revision}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Input script, language, and token coverage",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_daily_feature_mean{feature=~\"non_latin_share|non_english|byte_or_unknown_share|digit_or_punctuation_share\"}[36h])",
+          "legendFormat": "daily {{feature}} {{revision}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (feature, version, revision) (rate(en_gu_translation_feature_sum{feature=~\"non_latin_share|non_english|byte_or_unknown_share|digit_or_punctuation_share\"}[5m])) / sum by (feature, version, revision) (rate(en_gu_translation_feature_count{feature=~\"non_latin_share|non_english|byte_or_unknown_share|digit_or_punctuation_share\"}[5m]))",
+          "legendFormat": "live {{feature}} {{revision}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    }
+  ]
+}

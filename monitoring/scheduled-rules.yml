@@ -1,0 +1,44 @@
+groups:
+  - name: en-gu-scheduled
+    rules:
+      - alert: TranslationInputDrift
+        expr: |
+          last_over_time(en_gu_drift_persistent[36h]) == 1
+          and (time() - last_over_time(en_gu_drift_timestamp_seconds[36h]) < 129600)
+        labels:
+          severity: review
+        annotations:
+          summary: Input drift crossed the threshold in two daily windows.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#input-drift
+
+      - alert: TranslationGoldenQualityDrop
+        expr: |
+          last_over_time(en_gu_golden_passed[36h]) == 0 and last_over_time(en_gu_golden_probe_error[36h]) == 0
+          and (time() - last_over_time(en_gu_golden_timestamp_seconds[36h]) < 129600)
+        labels:
+          severity: page
+        annotations:
+          summary: Golden-set chrF++ fell below the configured floor.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#golden-set-failure
+
+      - alert: TranslationGoldenProbeFailure
+        expr: |
+          last_over_time(en_gu_golden_probe_error[36h]) == 1
+          and (time() - last_over_time(en_gu_golden_timestamp_seconds[36h]) < 129600)
+        labels:
+          severity: page
+        annotations:
+          summary: The golden-set probe did not complete.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#golden-set-failure
+
+      - alert: TranslationMonitoringStale
+        expr: |
+          (time() - max_over_time(en_gu_golden_timestamp_seconds[48h]) > 129600) or
+          (time() - max_over_time(en_gu_drift_timestamp_seconds[48h]) > 129600) or
+          absent_over_time(en_gu_golden_timestamp_seconds[48h]) or absent_over_time(en_gu_drift_timestamp_seconds[48h])
+        for: 15m
+        labels:
+          severity: review
+        annotations:
+          summary: A daily monitoring result is missing or more than 36 hours old.
+          runbook: https://github.com/AnshBhavsar1654/en-gu-transformer/blob/main/RUNBOOKS.md#missing-monitoring-results

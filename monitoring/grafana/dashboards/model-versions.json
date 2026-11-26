@@ -1,0 +1,192 @@
+{
+  "uid": "en-gu-versions",
+  "title": "Model versions",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Mean inference latency by revision",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_daily_feature_mean{feature=~\"latency_ms\"}[36h])",
+          "legendFormat": "daily {{version}} {{revision}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "1000 * sum by (version, revision) (rate(en_gu_translation_feature_sum{feature=\"latency_seconds\"}[5m])) / sum by (version, revision) (rate(en_gu_translation_feature_count{feature=\"latency_seconds\"}[5m]))",
+          "legendFormat": "live {{version}} {{revision}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Output length-limit hits by revision",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "last_over_time(en_gu_daily_feature_mean{feature=~\"hit_length_limit\"}[36h])",
+          "legendFormat": "daily {{version}} {{revision}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (feature, version, revision) (rate(en_gu_translation_feature_sum{feature=~\"hit_length_limit\"}[5m])) / sum by (feature, version, revision) (rate(en_gu_translation_feature_count{feature=~\"hit_length_limit\"}[5m]))",
+          "legendFormat": "live {{version}} {{revision}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Ratings and corrections by revision",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum by (version, revision, rating, with_correction) (increase(en_gu_model_feedback_total[1h]))",
+          "legendFormat": "live {{revision}} {{version}} {{rating}} correction={{with_correction}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        },
+        {
+          "expr": "last_over_time(en_gu_daily_feedback_count[36h])",
+          "legendFormat": "daily {{revision}} {{version}} {{rating}} correction={{with_correction}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Loaded model",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "en-gu-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "en_gu_model_info",
+          "legendFormat": "{{version}} {{source}} {{device}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "en-gu-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    }
+  ]
+}

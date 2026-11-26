@@ -144,3 +144,62 @@ gcloud run services update-traffic en-gu-api --region us-central1 --to-revisions
 ```
 
 `gcloud run deploy` keeps the service's other settings (resources, probes, env vars) from the previous revision.
+
+
+## Monitoring
+
+Use the local Compose profile from the [README](README.md#monitoring) before running a drill on staging.
+Prometheus shows firing rules at `http://localhost:9090/alerts`. For local demonstrations, export stdout
+with `docker compose logs --no-log-prefix api` and run the drift and quality commands from the README.
+The file exporter serves the `.prom` outputs from `artifacts/monitoring`.
+
+### Production setup
+
+1. Set the `PRODUCTION_API_URL` repository variable to the deployed API endpoint.
+2. Create a dedicated Google Cloud service account with `roles/logging.viewer` and grant the repository's
+   GitHub Workload Identity principal `roles/iam.workloadIdentityUser` on that account, using the
+   [deployment setup](scripts/setup_gcp_cicd.sh) as the reference. Set the account email in
+   `GCP_MONITORING_SA`. The drift job also uses the existing `GCP_PROJECT_ID`, `GCP_WIF_PROVIDER`,
+   `GCP_REGION` and `PRODUCTION_SERVICE` settings.
+3. Dispatch **Production monitoring** and review the two artifact bundles. The scheduled run starts daily
+   at 03:23 UTC. For Grafana Cloud, set `GRAFANA_INFLUX_URL` to your metrics instance's
+   `/api/v1/push/influx` endpoint, set `GRAFANA_METRICS_USER` to its instance ID, and add an access policy
+   token with metrics write scope as the `GRAFANA_METRICS_TOKEN` repository secret.
+   [Grafana Cloud ingest setup](https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-influxdb/push-from-telegraf/)
+4. Import the [daily-signal dashboards](monitoring/grafana/dashboards) with your Grafana Cloud Prometheus
+   data source. Use the [scheduled rules](monitoring/scheduled-rules.yml) in that same data source's ruler,
+   and configure contact routing for `page` and `review`. For fleet service health, use the Cloud Run
+   service's Metrics tab. An individual HTTP scrape of a load-balanced Cloud Run URL only samples the
+   instance that answered. The [live scrape rules](monitoring/rules.yml) are for the local Prometheus target.
+   [Cloud Run metrics](https://cloud.google.com/run/docs/monitoring)
+
+### Input drift
+
+Check sample counts and the named features in the 24-hour and 7-day reports. Compare the affected
+revision, input lengths, scripts, language flags, and token coverage against the reference. A missing
+score means there was insufficient usable data in that window. If a shift is sustained, record the
+model/version, affected windows, feature results, and observed sample counts in a retraining review.
+Use the same review path for a significant increase in negative feedback.
+
+### Golden-set failure
+
+Open the latest quality result and distinguish a low score from a failed probe. If a rollout was
+in progress, repeat the probe on a single tagged revision to avoid mixing versions. For a low score
+or broken recent revision, compare `/info` with the expected build, run the canary on the stable
+revision, and shift traffic to stable using the rollback procedure above. Verify `/ready` and rerun the
+200-pair canary against production after the traffic change. Refresh the baseline only after approving
+a new champion and measuring it on the same fixed sample.
+
+### Service or output regression
+
+Check request rates, 5xx, p95 latency, and activity or startup by revision. For output alerts, inspect
+repetition and length-limit hits with the input drift report and the golden-set scores. Use the
+rollback procedure when the regression follows a new revision. The service, drift, and feedback
+thresholds are initial settings to calibrate with representative traffic.
+
+### Missing monitoring results
+
+Check the scheduled workflow status, Cloud Logging permissions, endpoint readiness, and the Grafana
+export step. Re-dispatch **Production monitoring** after correcting the failing dependency. Locally,
+verify that both daily `.prom` files exist, the exporter can read them, and Prometheus has scraped
+the exporter. An empty traffic window can produce a fresh report without a drift score.

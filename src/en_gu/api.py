@@ -13,13 +13,16 @@ thread at startup, so /health answers immediately and /ready turns true once the
 carries an `X-Request-ID` header, and `X-Model-Version` once a model is loaded.
 """
 
+import asyncio
 import logging
+import math
 import os
 import re
+import sqlite3
 import threading
 import time
 import uuid
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
@@ -31,10 +34,25 @@ from en_gu.config import load_config
 from en_gu.feedback import FeedbackStore
 from en_gu.metrics import ServiceMetrics
 from en_gu.serving import SERVE_CONFIGS, Translator, serve_settings
+from en_gu.telemetry import emit, hash_input, language_factory
 from en_gu.textutils import split_sentences
 
 log = logging.getLogger(__name__)
 REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
+SYNTHETIC_AGENTS = {
+    "en-gu-quality-canary": "canary",
+    "en-gu-smoke-test": "smoke",
+    "en-gu-simulated-traffic": "simulated",
+}
+
+
+async def purge_expired_feedback(store):
+    while True:
+        await asyncio.sleep(3600)
+        try:
+            await asyncio.to_thread(store.purge)
+        except sqlite3.Error:
+            log.exception("Could not purge expired feedback")
 
 
 class TranslateRequest(BaseModel):
@@ -85,6 +103,7 @@ class ServiceState:
         try:
             self.set_translator(Translator.load(cfg, settings))
         except Exception as exc:  # stay up and report not-ready instead of crash-looping
+            self.metrics.starts.labels("failure").inc()
             log.exception("Model failed to load")
             self.error = f"{type(exc).__name__}: {exc}"
         finally:
@@ -113,16 +132,19 @@ def create_app(cfg=None, translator=None, background=True):
     cfg = cfg or default_config()
     settings = serve_settings(cfg)
     limits = settings["limits"]
-    metrics = ServiceMetrics()
+    revision = os.environ.get("K_REVISION") or "local"
+    metrics = ServiceMetrics(revision)
     state = ServiceState(metrics)
     feedback_store = FeedbackStore(settings["feedback_db"], settings.get("feedback_retention_days"))
     build = os.environ.get("EN_GU_BUILD_SHA") or None  # git commit baked into the image by CI
-    revision = os.environ.get("K_REVISION") or None  # set by Cloud Run: which revision served the request
     instance = uuid.uuid4().hex[:12]  # one id per process, so a new (cold) instance is recognisable
     started = time.time()
+    hash_key = (os.environ.get("EN_GU_TELEMETRY_HASH_KEY") or "").encode() or os.urandom(32)
 
     @asynccontextmanager
     async def lifespan(app):
+        language_factory()
+        emit("startup", revision=revision, instance=instance)
         if translator is not None:
             state.set_translator(translator)
             state.loaded.set()
@@ -130,7 +152,13 @@ def create_app(cfg=None, translator=None, background=True):
             threading.Thread(target=state.load, args=(cfg, settings), name="model-loader", daemon=True).start()
         else:
             state.load(cfg, settings)
-        yield
+        cleanup = asyncio.create_task(purge_expired_feedback(feedback_store))
+        try:
+            yield
+        finally:
+            cleanup.cancel()
+            with suppress(asyncio.CancelledError):
+                await cleanup
 
     app = FastAPI(
         title="English → Gujarati translation API",
@@ -160,6 +188,7 @@ def create_app(cfg=None, translator=None, background=True):
         response.headers["X-Request-ID"] = request.state.request_id
         if state.translator is not None:
             response.headers["X-Model-Version"] = state.translator.version
+            response.headers["X-Model-Revision"] = revision
         return response
 
     @app.get("/metrics", include_in_schema=False)
@@ -184,7 +213,7 @@ def create_app(cfg=None, translator=None, background=True):
             "limits": limits,
             "api_version": __version__,
             "build": build,
-            "revision": revision,
+            "revision": None if revision == "local" else revision,
             "instance": instance,
             "uptime_seconds": round(time.time() - started, 1),
         }
@@ -204,8 +233,22 @@ def create_app(cfg=None, translator=None, background=True):
             raise HTTPException(422, detail=f"beam_size must be between {limits['min_beam']} and {limits['max_beam']}")
 
         translator = state.require_translator()
-        result = translator.translate_text(text, beam_size=beam)
+        result = translator.translate_text(text, beam_size=beam, observe=True)
         metrics.observe_translation(beam, result.latency_ms / 1000, result.n_sentences, len(text))
+        features = {
+            key: value if value is not None and math.isfinite(value) else None for key, value in result.features.items()
+        }
+        metrics.observe_features({**features, "latency_seconds": result.latency_ms / 1000}, translator.version)
+        emit(
+            "translation",
+            revision=revision,
+            model_version=translator.version,
+            input_hash=hash_input(text, hash_key),
+            beam_size=beam,
+            latency_ms=round(result.latency_ms, 1),
+            traffic=SYNTHETIC_AGENTS.get(request.headers.get("User-Agent"), "regular"),
+            **features,
+        )
         return TranslateResponse(
             request_id=request.state.request_id,
             translation=result.translation,
@@ -226,7 +269,17 @@ def create_app(cfg=None, translator=None, background=True):
         source, translation = (body.source_text, body.translation) if corrected else (None, None)
         version = body.model_version or (state.translator.version if state.translator else None)
         feedback_id = feedback_store.add(body.request_id, body.rating, version, source, translation, corrected)
-        metrics.feedback.labels(body.rating, str(corrected is not None).lower()).inc()
+        confirmed_version = (
+            state.translator.version if state.translator and version == state.translator.version else "unknown"
+        )
+        metrics.observe_feedback(body.rating, corrected is not None, confirmed_version)
+        emit(
+            "feedback",
+            revision=revision,
+            model_version=confirmed_version,
+            rating=body.rating,
+            corrected=bool(corrected),
+        )
         return FeedbackResponse(feedback_id=feedback_id, stored_text=corrected is not None)
 
     return app
