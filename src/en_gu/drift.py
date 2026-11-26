@@ -52,12 +52,13 @@ def read_events(path):
     content = path.read_text(encoding="utf-8-sig").lstrip()
     if content.startswith("["):
         records = json.loads(content)
-        entries = (record.get("jsonPayload", {}) for record in records)
+        entries = ((record.get("jsonPayload", {}), record.get("timestamp")) for record in records)
     else:
-        entries = (json.loads(line) for line in content.splitlines() if line.lstrip().startswith("{"))
-    for event in entries:
+        entries = ((json.loads(line), None) for line in content.splitlines() if line.lstrip().startswith("{"))
+    for event, log_timestamp in entries:
         if event.get("schema") == 1 and event.get("event") in {"translation", "feedback"}:
-            yield datetime.fromisoformat(event["timestamp"]), event
+            timestamp = event.get("timestamp") or log_timestamp
+            yield datetime.fromisoformat(timestamp.replace("Z", "+00:00")), event
 
 
 def compare(reference, current, minimum, html=None):

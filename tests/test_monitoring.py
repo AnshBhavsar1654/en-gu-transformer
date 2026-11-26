@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from en_gu.api import create_app
-from en_gu.drift import TESTS, run_report
+from en_gu.drift import TESTS, read_events, run_report
 from en_gu.model import beam_search, greedy_decode
 from en_gu.quality_canary import golden_pairs
 from en_gu.serving import Translator
@@ -123,3 +123,13 @@ def test_golden_sample_is_fixed_and_parallel():
     assert len(pairs) == 200
     assert len({source for source, _ in pairs}) == len(pairs)
     assert all(source and target for source, target in pairs)
+
+
+def test_cloud_log_timestamp_can_live_outside_json_payload(tmp_path):
+    logs = tmp_path / "cloud.json"
+    payload = {"event": "translation", "schema": 1, "traffic": "regular"}
+    logs.write_text(
+        json.dumps([{"timestamp": "2026-01-03T12:00:00.123456789Z", "jsonPayload": payload}]),
+        encoding="utf-8",
+    )
+    assert list(read_events(logs)) == [(datetime(2026, 1, 3, 12, 0, 0, 123456, tzinfo=timezone.utc), payload)]
